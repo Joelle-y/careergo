@@ -405,8 +405,9 @@
       freeAnalysisRemaining: 3,
       subscriptionType: 'free',
     };
-    let currentUser = State.get('currentUser', null);
-    let currentView = currentUser ? 'home' : 'landing';
+    // 演示阶段：每次打开都从 landing 开始，不恢复登录态
+    let currentUser = null;
+    let currentView = 'landing';
     let selectedJobForAnalysis = null;
 
     // ===== Toast =====
@@ -2591,6 +2592,7 @@
       } else {
         switch (currentView) {
           case 'login': app.innerHTML = viewLogin(); break;
+          case 'landing': app.innerHTML = viewLanding(); break;
           case 'home': app.innerHTML = viewHome(); break;
           case 'resume': app.innerHTML = viewResume(); break;
           case 'match': app.innerHTML = viewMatch(); break;
