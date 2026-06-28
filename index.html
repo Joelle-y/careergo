@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CareerGo · 求职智能匹配与简历诊断平台</title>
+  <title>启鹅 · 求职智能匹配与简历诊断平台</title>
   <meta name="description" content="面向在校大学生的AI求职辅助工具——快速匹配岗位、诊断简历差距">
 
   <!-- Fonts: Outfit (heading) + Work Sans (body) per ui-ux-pro-max design system -->
@@ -16,6 +16,9 @@
 
   <!-- Lucide Icons (SVG, per ui-ux-pro-max: no emoji as icons) -->
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <!-- 真实岗位数据注入点：由 Craft Agent 调用 mcp-jobs 爬取后生成，覆盖 window.REAL_JOBS -->
+  <script src="./real-jobs.js"></script>
 
   <script>
     tailwind.config = {
@@ -1573,15 +1576,72 @@
 
     // Mock job database
     const MOCK_JOBS = [
-      { id: 'j1', title: '前端开发工程师', company: '字节跳动', city: '北京', salary: '20-35K', education: '本科', skills: ['JavaScript', 'React', 'TypeScript', 'CSS'], experience: '应届', desc: '负责抖音电商前端开发，使用 React 技术栈。参与大型项目架构设计，与产品、设计紧密协作。', tags: ['大厂', 'React', '电商'], url: 'https://www.zhipin.com/web/geek/job?query=前端开发&city=101010100' },
-      { id: 'j2', title: '前端开发实习生', company: '腾讯', city: '深圳', salary: '300-400/天', education: '本科', skills: ['JavaScript', 'Vue', 'HTML', 'CSS'], experience: '实习', desc: '参与微信小程序开发，使用 Vue 和原生小程序技术。团队氛围好，mentor 一对一指导。', tags: ['大厂', 'Vue', '小程序'], url: 'https://www.zhipin.com/web/geek/job?query=前端实习&city=101280600' },
-      { id: 'j3', title: 'Java 后端开发', company: '阿里巴巴', city: '杭州', salary: '18-30K', education: '本科', skills: ['Java', 'Spring', 'MySQL', 'Redis'], experience: '应届', desc: '参与淘宝交易系统开发，高并发场景实践。使用 Spring Cloud 微服务架构。', tags: ['大厂', 'Java', '高并发'], url: 'https://www.zhipin.com/web/geek/job?query=Java后端&city=101210100' },
-      { id: 'j4', title: '数据分析师', company: '美团', city: '北京', salary: '15-25K', education: '本科', skills: ['Python', 'SQL', 'Excel', '统计学'], experience: '应届', desc: '负责外卖业务数据分析，使用 SQL 和 Python 进行数据建模。输出业务洞察报告。', tags: ['数据', 'Python', 'SQL'], url: 'https://www.zhipin.com/web/geek/job?query=数据分析&city=101010100' },
-      { id: 'j5', title: '全栈开发工程师', company: '某创业公司', city: '上海', salary: '15-25K', education: '本科', skills: ['JavaScript', 'Node.js', 'React', 'MySQL'], experience: '应届', desc: '负责 SaaS 产品全栈开发，前端 React + 后端 Node.js。快速成长机会多。', tags: ['创业', '全栈', 'Node.js'], url: 'https://www.zhipin.com/web/geek/job?query=全栈开发&city=101020100' },
-      { id: 'j6', title: '前端开发工程师', company: '小红书', city: '上海', salary: '18-30K', education: '本科', skills: ['JavaScript', 'React', 'TypeScript', 'Webpack'], experience: '应届', desc: '参与小红书社区前端开发，使用 React + TypeScript。关注性能优化与用户体验。', tags: ['社区', 'React', 'TypeScript'], url: 'https://www.zhipin.com/web/geek/job?query=前端开发&city=101020100' },
-      { id: 'j7', title: '测试开发工程师', company: '百度', city: '北京', salary: '16-26K', education: '本科', skills: ['Python', 'Java', '自动化测试', 'Linux'], experience: '应届', desc: '负责搜索业务测试自动化，使用 Python 和 Selenium。保障产品质量。', tags: ['大厂', '测试', 'Python'], url: 'https://www.zhipin.com/web/geek/job?query=测试开发&city=101010100' },
+      // ===== 前端方向 =====
+      { id: 'j1', title: '前端开发工程师', company: '字节跳动', city: '北京', salary: '20-35K', education: '本科', skills: ['JavaScript', 'React', 'TypeScript', 'CSS'], experience: '应届', desc: '负责抖音电商前端开发，使用 React 技术栈。参与大型项目架构设计，与产品、设计紧密协作。', tags: ['大厂', 'React', '电商', '前端'], url: 'https://www.zhipin.com/web/geek/job?query=前端开发&city=101010100' },
+      { id: 'j2', title: '前端开发实习生', company: '腾讯', city: '深圳', salary: '300-400/天', education: '本科', skills: ['JavaScript', 'Vue', 'HTML', 'CSS'], experience: '实习', desc: '参与微信小程序开发，使用 Vue 和原生小程序技术。团队氛围好，mentor 一对一指导。', tags: ['大厂', 'Vue', '小程序', '前端'], url: 'https://www.zhipin.com/web/geek/job?query=前端实习&city=101280600' },
+      { id: 'j6', title: '前端开发工程师', company: '小红书', city: '上海', salary: '18-30K', education: '本科', skills: ['JavaScript', 'React', 'TypeScript', 'Webpack'], experience: '应届', desc: '参与小红书社区前端开发，使用 React + TypeScript。关注性能优化与用户体验。', tags: ['社区', 'React', 'TypeScript', '前端'], url: 'https://www.zhipin.com/web/geek/job?query=前端开发&city=101020100' },
+      { id: 'j9', title: 'Web 前端开发', company: '美团', city: '北京', salary: '16-28K', education: '本科', skills: ['JavaScript', 'React', 'CSS', 'Webpack'], experience: '应届', desc: '负责外卖商家端前端开发，React 技术栈，关注性能与可访问性。', tags: ['大厂', 'React', '前端', '外卖'], url: 'https://www.zhipin.com/web/geek/job?query=前端开发&city=101010100' },
+      { id: 'j10', title: '前端开发工程师', company: '快手', city: '北京', salary: '18-32K', education: '本科', skills: ['JavaScript', 'Vue', 'TypeScript', 'Node.js'], experience: '应届', desc: '参与快手主站前端开发，Vue 3 技术栈，关注视频播放体验与性能优化。', tags: ['大厂', 'Vue', '视频', '前端'], url: 'https://www.zhipin.com/web/geek/job?query=前端开发&city=101010100' },
+
+      // ===== 后端方向 =====
+      { id: 'j3', title: 'Java 后端开发', company: '阿里巴巴', city: '杭州', salary: '18-30K', education: '本科', skills: ['Java', 'Spring', 'MySQL', 'Redis'], experience: '应届', desc: '参与淘宝交易系统开发，高并发场景实践。使用 Spring Cloud 微服务架构。', tags: ['大厂', 'Java', '高并发', '后端'], url: 'https://www.zhipin.com/web/geek/job?query=Java后端&city=101210100' },
+      { id: 'j11', title: 'Go 后端开发工程师', company: '字节跳动', city: '北京', salary: '22-38K', education: '本科', skills: ['Go', 'MySQL', 'Redis', 'Kubernetes'], experience: '应届', desc: '负责抖音推荐服务后端开发，Go 语言 + 微服务架构，日活亿级系统挑战。', tags: ['大厂', 'Go', '后端', '高并发'], url: 'https://www.zhipin.com/web/geek/job?query=Go后端&city=101010100' },
+      { id: 'j12', title: 'Python 后端开发', company: '知乎', city: '北京', salary: '16-28K', education: '本科', skills: ['Python', 'Django', 'MySQL', 'Redis'], experience: '应届', desc: '参与知乎社区后端开发，Python + Django 技术栈，处理海量内容数据。', tags: ['社区', 'Python', '后端'], url: 'https://www.zhipin.com/web/geek/job?query=Python后端&city=101010100' },
+      { id: 'j13', title: '后端开发工程师', company: 'Shein', city: '广州', salary: '15-25K', education: '本科', skills: ['Java', 'Spring Boot', 'MySQL', 'MongoDB'], experience: '应届', desc: '参与跨境电商平台后端开发，Java 技术栈，服务全球用户。', tags: ['跨境', 'Java', '后端', '电商'], url: 'https://www.zhipin.com/web/geek/job?query=后端开发&city=101280100' },
+
+      // ===== 全栈 =====
+      { id: 'j5', title: '全栈开发工程师', company: '某创业公司', city: '上海', salary: '15-25K', education: '本科', skills: ['JavaScript', 'Node.js', 'React', 'MySQL'], experience: '应届', desc: '负责 SaaS 产品全栈开发，前端 React + 后端 Node.js。快速成长机会多。', tags: ['创业', '全栈', 'Node.js', '前端', '后端'], url: 'https://www.zhipin.com/web/geek/job?query=全栈开发&city=101020100' },
+      { id: 'j14', title: '全栈开发实习生', company: '某科技公司', city: '深圳', salary: '250-350/天', education: '本科', skills: ['JavaScript', 'Vue', 'Node.js', 'MongoDB'], experience: '实习', desc: '参与内部工具全栈开发，Vue + Node.js，独立负责模块设计到上线。', tags: ['实习', '全栈', 'Vue', 'Node.js'], url: 'https://www.zhipin.com/web/geek/job?query=全栈实习&city=101280600' },
+
+      // ===== 数据方向 =====
+      { id: 'j4', title: '数据分析师', company: '美团', city: '北京', salary: '15-25K', education: '本科', skills: ['Python', 'SQL', 'Excel', '统计学'], experience: '应届', desc: '负责外卖业务数据分析，使用 SQL 和 Python 进行数据建模。输出业务洞察报告。', tags: ['数据', 'Python', 'SQL', '分析'], url: 'https://www.zhipin.com/web/geek/job?query=数据分析&city=101010100' },
+      { id: 'j15', title: '数据挖掘工程师', company: '阿里巴巴', city: '杭州', salary: '20-35K', education: '硕士', skills: ['Python', '机器学习', 'SQL', 'TensorFlow'], experience: '应届', desc: '负责淘宝推荐算法优化，机器学习模型训练与部署，提升推荐转化率。', tags: ['大厂', '数据', '机器学习', '算法'], url: 'https://www.zhipin.com/web/geek/job?query=数据挖掘&city=101210100' },
+      { id: 'j16', title: '数据工程师', company: '字节跳动', city: '北京', salary: '18-30K', education: '本科', skills: ['Python', 'Spark', 'SQL', 'Hadoop'], experience: '应届', desc: '负责数据仓库建设与 ETL 开发，Spark + Hive 处理 PB 级数据。', tags: ['大厂', '数据', 'Spark', '大数据'], url: 'https://www.zhipin.com/web/geek/job?query=数据工程&city=101010100' },
+      { id: 'j17', title: 'BI 分析师', company: '京东', city: '北京', salary: '14-22K', education: '本科', skills: ['SQL', 'Tableau', 'Excel', '数据分析'], experience: '应届', desc: '负责经营分析报表开发，Tableau 数据可视化，为管理层提供决策支持。', tags: ['大厂', '数据', 'BI', '分析'], url: 'https://www.zhipin.com/web/geek/job?query=BI分析&city=101010100' },
+
+      // ===== 产品方向 =====
       { id: 'j8', title: '产品经理', company: '网易', city: '杭州', salary: '15-22K', education: '本科', skills: ['需求分析', '原型设计', '数据分析', '沟通'], experience: '应届', desc: '负责网易云音乐产品迭代，从用户调研到功能上线全流程参与。', tags: ['大厂', '产品', '音乐'], url: 'https://www.zhipin.com/web/geek/job?query=产品经理&city=101210100' },
+      { id: 'j18', title: '产品经理', company: '腾讯', city: '深圳', salary: '18-28K', education: '本科', skills: ['需求分析', '原型设计', '用户研究', '数据分析'], experience: '应届', desc: '负责 QQ 产品功能规划，用户调研、竞品分析、需求文档撰写。', tags: ['大厂', '产品', '社交'], url: 'https://www.zhipin.com/web/geek/job?query=产品经理&city=101280600' },
+      { id: 'j19', title: '产品助理', company: '某互联网公司', city: '上海', salary: '8-12K', education: '本科', skills: ['需求分析', 'Axure', '文档撰写', '沟通'], experience: '应届', desc: '协助产品经理完成需求文档、原型设计，参与项目跟进与测试验收。', tags: ['产品', '助理', 'Axure'], url: 'https://www.zhipin.com/web/geek/job?query=产品助理&city=101020100' },
+
+      // ===== 测试方向 =====
+      { id: 'j7', title: '测试开发工程师', company: '百度', city: '北京', salary: '16-26K', education: '本科', skills: ['Python', 'Java', '自动化测试', 'Linux'], experience: '应届', desc: '负责搜索业务测试自动化，使用 Python 和 Selenium。保障产品质量。', tags: ['大厂', '测试', 'Python', '自动化'], url: 'https://www.zhipin.com/web/geek/job?query=测试开发&city=101010100' },
+      { id: 'j20', title: '软件测试工程师', company: '小米', city: '北京', salary: '12-20K', education: '本科', skills: ['测试用例', 'Python', 'Linux', '接口测试'], experience: '应届', desc: '负责 MIUI 系统测试，功能测试 + 接口测试，保障系统稳定性。', tags: ['大厂', '测试', '手机'], url: 'https://www.zhipin.com/web/geek/job?query=软件测试&city=101010100' },
+
+      // ===== 运营方向 =====
+      { id: 'j21', title: '内容运营', company: 'B站', city: '上海', salary: '10-16K', education: '本科', skills: ['内容策划', '数据分析', '文案', '运营'], experience: '应届', desc: '负责 B 站内容生态运营，策划活动、分析数据、优化内容推荐策略。', tags: ['运营', '内容', '视频'], url: 'https://www.zhipin.com/web/geek/job?query=内容运营&city=101020100' },
+      { id: 'j22', title: '用户运营', company: '小红书', city: '上海', salary: '10-15K', education: '本科', skills: ['用户增长', '数据分析', '活动策划', '沟通'], experience: '应届', desc: '负责小红书用户增长与留存，设计激励机制，分析用户行为数据。', tags: ['运营', '用户', '增长'], url: 'https://www.zhipin.com/web/geek/job?query=用户运营&city=101020100' },
+      { id: 'j23', title: '新媒体运营', company: '某品牌公司', city: '广州', salary: '7-12K', education: '本科', skills: ['文案', '微信公众号', '短视频', '运营'], experience: '应届', desc: '负责品牌新媒体矩阵运营，公众号 + 抖音 + 小红书内容策划与发布。', tags: ['运营', '新媒体', '文案'], url: 'https://www.zhipin.com/web/geek/job?query=新媒体运营&city=101280100' },
+
+      // ===== 设计方向 =====
+      { id: 'j24', title: 'UI 设计师', company: '网易', city: '杭州', salary: '12-20K', education: '本科', skills: ['Figma', 'Sketch', '视觉设计', '交互设计'], experience: '应届', desc: '负责网易系产品 UI 设计，Figma 协作，参与设计规范建设。', tags: ['设计', 'UI', 'Figma'], url: 'https://www.zhipin.com/web/geek/job?query=UI设计&city=101210100' },
+      { id: 'j25', title: '交互设计师', company: '腾讯', city: '深圳', salary: '15-24K', education: '本科', skills: ['Axure', 'Figma', '用户研究', '交互设计'], experience: '应届', desc: '负责微信支付交互设计，用户旅程梳理、原型设计、可用性测试。', tags: ['大厂', '设计', '交互'], url: 'https://www.zhipin.com/web/geek/job?query=交互设计&city=101280600' },
+
+      // ===== 移动端方向 =====
+      { id: 'j26', title: 'Android 开发工程师', company: '美团', city: '北京', salary: '18-30K', education: '本科', skills: ['Java', 'Kotlin', 'Android', 'Android SDK'], experience: '应届', desc: '负责美团 App Android 端开发，Kotlin 语言，关注性能与用户体验。', tags: ['大厂', 'Android', '移动端'], url: 'https://www.zhipin.com/web/geek/job?query=Android开发&city=101010100' },
+      { id: 'j27', title: 'iOS 开发工程师', company: '字节跳动', city: '北京', salary: '20-34K', education: '本科', skills: ['Swift', 'Objective-C', 'iOS', 'Xcode'], experience: '应届', desc: '负责抖音 iOS 端开发，Swift 语言，处理视频录制与编辑核心模块。', tags: ['大厂', 'iOS', '移动端'], url: 'https://www.zhipin.com/web/geek/job?query=iOS开发&city=101010100' },
+      { id: 'j28', title: 'React Native 开发', company: '某创业公司', city: '深圳', salary: '14-22K', education: '本科', skills: ['JavaScript', 'React Native', 'React', 'TypeScript'], experience: '应届', desc: '负责跨平台 App 开发，React Native 技术栈，一套代码双端运行。', tags: ['创业', 'React Native', '移动端', '前端'], url: 'https://www.zhipin.com/web/geek/job?query=React+Native&city=101280600' },
+
+      // ===== AI / 算法 =====
+      { id: 'j29', title: '算法工程师', company: '百度', city: '北京', salary: '22-38K', education: '硕士', skills: ['Python', '深度学习', 'C++', 'PyTorch'], experience: '应届', desc: '负责搜索推荐算法研发，深度学习模型训练，提升搜索相关性。', tags: ['大厂', '算法', 'AI', '深度学习'], url: 'https://www.zhipin.com/web/geek/job?query=算法工程师&city=101010100' },
+      { id: 'j30', title: 'NLP 工程师', company: '科大讯飞', city: '合肥', salary: '16-28K', education: '硕士', skills: ['Python', 'NLP', 'PyTorch', 'Transformer'], experience: '应届', desc: '负责语音识别与自然语言处理研发，Transformer 模型优化与部署。', tags: ['AI', 'NLP', '算法'], url: 'https://www.zhipin.com/web/geek/job?query=NLP工程师&city=101220100' },
     ];
+
+    // ===== 数据源抽象：优先使用 mcp-jobs 真实数据，无则回退模拟数据 =====
+    // window.REAL_JOBS 由 real-jobs.js 注入（Craft Agent 调用 mcp-jobs 爬取后生成）
+    const JobSource = {
+      all() {
+        return (window.REAL_JOBS && Array.isArray(window.REAL_JOBS) && window.REAL_JOBS.length > 0)
+          ? window.REAL_JOBS
+          : MOCK_JOBS;
+      },
+      isReal() {
+        return !!(window.REAL_JOBS && Array.isArray(window.REAL_JOBS) && window.REAL_JOBS.length > 0);
+      },
+      label() {
+        return this.isReal() ? '真实岗位·mcp-jobs' : '演示数据';
+      },
+    };
 
     function searchJobs(e) {
       e.preventDefault();
@@ -1614,7 +1674,48 @@
 
       setTimeout(() => {
         const resume = Resumes.getActive();
-        const matched = MOCK_JOBS.map(job => {
+
+        // 第一步：根据兴趣方向和专业筛选相关岗位
+        const interestKeywords = (form.interest || '').toLowerCase().split(/[\s,，、]+/).filter(Boolean);
+        const majorKeywords = (form.major || '').toLowerCase().split(/[\s,，、]+/).filter(Boolean);
+
+        const isJobRelevant = (job) => {
+          const titleLower = job.title.toLowerCase();
+          const tagsLower = (job.tags || []).map(t => t.toLowerCase());
+          const skillsLower = (job.skills || []).map(s => s.toLowerCase());
+          const descLower = (job.desc || '').toLowerCase();
+
+          // 兴趣关键词匹配岗位标题/技能/标签/描述
+          const interestHit = interestKeywords.some(k =>
+            titleLower.includes(k) || skillsLower.some(s => s.includes(k)) ||
+            tagsLower.some(t => t.includes(k)) || descLower.includes(k)
+          );
+          // 专业关键词匹配岗位描述/技能
+          const majorHit = majorKeywords.some(k =>
+            descLower.includes(k) || skillsLower.some(s => s.includes(k)) || titleLower.includes(k)
+          );
+
+          return interestHit || majorHit;
+        };
+
+        // 筛选出相关岗位
+        let relevantJobs = JobSource.all().filter(isJobRelevant);
+
+        // 如果筛出来太少（<3），放宽限制，按兴趣关键词宽松匹配
+        if (relevantJobs.length < 3 && interestKeywords.length > 0) {
+          relevantJobs = JobSource.all().filter(job => {
+            const allText = (job.title + ' ' + job.skills.join(' ') + ' ' + (job.tags || []).join(' ') + ' ' + (job.desc || '')).toLowerCase();
+            return interestKeywords.some(k => allText.includes(k));
+          });
+        }
+
+        // 如果还是太少，用全部岗位（兜底）
+        if (relevantJobs.length === 0) {
+          relevantJobs = JobSource.all().slice();
+        }
+
+        // 第二步：对相关岗位计算匹配度并排序
+        const matched = relevantJobs.map(job => {
           const score = calculateMatchScore(job, resume, form);
           return { ...job, matchRate: score.rate, matchReasons: score.reasons };
         }).sort((a, b) => b.matchRate - a.matchRate);
@@ -1624,8 +1725,11 @@
 
         container.innerHTML = `
           <div class="flex items-center justify-between mb-4">
-            <h2 class="font-heading text-xl font-semibold text-slate-800">匹配结果</h2>
-            <span class="text-sm text-slate-500">共 ${matched.length} 个岗位</span>
+            <div class="flex items-center gap-2">
+              <h2 class="font-heading text-xl font-semibold text-slate-800">匹配结果</h2>
+              <span class="text-xs px-2 py-0.5 rounded-full ${JobSource.isReal() ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}">${JobSource.label()}</span>
+            </div>
+            <span class="text-sm text-slate-500">根据「${form.interest || '不限'}」筛选出 ${matched.length} 个相关岗位</span>
           </div>
           <div class="space-y-4">
             ${highMatch.map(job => renderJobCard(job)).join('')}
@@ -1641,6 +1745,11 @@
               </div>
             </div>
           ` : ''}
+          <p class="mt-6 text-xs text-slate-400 leading-relaxed">
+            ${JobSource.isReal()
+              ? '本页岗位数据由 mcp-jobs 通过 Playwright 实时爬取自猎聘、BOSS 直聘、智联招聘、前程无忧，经字段归一化后展示。Demo 环境因反爬限制与耗时考虑，采用预爬取的北京/上海/深圳三地多类型岗位样本，非每次搜索实时抓取。'
+              : '当前为演示数据。接入 mcp-jobs 后，本页岗位将替换为通过 Playwright 从猎聘、BOSS 直聘、智联招聘、前程无忧爬取的真实数据。Demo 环境因反爬限制与耗时考虑，采用预爬取的北京/上海/深圳三地多类型岗位样本。'}
+          </p>
         `;
         btn.disabled = false;
         btn.innerHTML = icon('search', 18, 'inline mr-1.5') + '重新匹配';
@@ -1668,31 +1777,50 @@
       let skillScore = 0, eduScore = 0, expScore = 0;
       const reasons = [];
 
-      // Skill match (40%)
+      // Skill match (40%) - 基于简历技能
       const jobSkills = job.skills.map(s => s.toLowerCase());
-      const resumeSkills = resume.skills.map(s => s.toLowerCase());
+      const resumeSkills = (resume.skills || []).map(s => s.toLowerCase());
       const matchedSkills = jobSkills.filter(s => resumeSkills.some(rs => rs.includes(s) || s.includes(rs)));
       skillScore = (matchedSkills.length / jobSkills.length) * 100;
       if (matchedSkills.length > 0) {
         reasons.push(`技能匹配 ${matchedSkills.length}/${jobSkills.length}：${matchedSkills.map(s => job.skills[jobSkills.indexOf(s)]).join('、')}`);
       }
 
-      // Education match (30%)
+      // Education match (30%) - 用表单填写的学历，而非简历学历
       const eduLevel = { '大专': 1, '本科': 2, '硕士': 3, '博士': 4 };
-      if (eduLevel[resume.education] >= eduLevel[job.education]) {
+      const formEdu = form.education || resume.education;
+      if (eduLevel[formEdu] >= eduLevel[job.education]) {
         eduScore = 100;
-        reasons.push(`学历满足要求（${resume.education} ≥ ${job.education}）`);
+        reasons.push(`学历满足要求（${formEdu} ≥ ${job.education}）`);
       } else {
-        eduScore = 50;
+        eduScore = 40;
       }
 
-      // Experience match (30%) - simplified: check if interest aligns with job title
-      const interestKeywords = form.interest.toLowerCase().split(/[\s,，、]+/).filter(Boolean);
+      // Interest match (30%) - 兴趣方向与岗位标题/技能/标签匹配
+      const interestKeywords = (form.interest || '').toLowerCase().split(/[\s,，、]+/).filter(Boolean);
       const titleLower = job.title.toLowerCase();
-      const interestMatch = interestKeywords.some(k => titleLower.includes(k) || job.skills.some(s => s.toLowerCase().includes(k)));
-      expScore = interestMatch ? 100 : 40;
-      if (interestMatch) {
-        reasons.push('兴趣方向与岗位高度契合');
+      const tagsLower = (job.tags || []).map(t => t.toLowerCase());
+      let interestMatchCount = 0;
+      interestKeywords.forEach(k => {
+        if (titleLower.includes(k) || job.skills.some(s => s.toLowerCase().includes(k)) || tagsLower.some(t => t.includes(k))) {
+          interestMatchCount++;
+        }
+      });
+      if (interestKeywords.length > 0) {
+        expScore = (interestMatchCount / interestKeywords.length) * 100;
+        if (interestMatchCount > 0) {
+          reasons.push(`兴趣方向匹配 ${interestMatchCount}/${interestKeywords.length} 个关键词`);
+        }
+      } else {
+        expScore = 40;
+      }
+
+      // 城市匹配加分
+      if (form.city && job.city) {
+        if (job.city.includes(form.city) || form.city.includes(job.city)) {
+          expScore = Math.min(100, expScore + 20);
+          reasons.push(`城市匹配（${job.city}）`);
+        }
       }
 
       const total = Math.round(skillScore * 0.4 + eduScore * 0.3 + expScore * 0.3);
