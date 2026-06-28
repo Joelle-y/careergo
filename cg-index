@@ -1,0 +1,2500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>启鹅 · 求职智能匹配与简历诊断平台</title>
+  <meta name="description" content="面向在校大学生的AI求职辅助工具——快速匹配岗位、诊断简历差距">
+
+  <!-- Fonts: Outfit (heading) + Work Sans (body) per ui-ux-pro-max design system -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS via Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide Icons (SVG, per ui-ux-pro-max: no emoji as icons) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            heading: ['Outfit', 'sans-serif'],
+            body: ['Work Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              light: '#94A3B8',  // 冷灰蓝
+              DEFAULT: '#475569', // 石板蓝
+              dark: '#1E3A5F',   // 深海蓝
+              deep: '#0F2942',
+            },
+            skybg: {
+              50: '#F8FAFC',
+              100: '#EEF2F7',
+            },
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    :root {
+      --color-primary: #94A3B8;
+      --color-secondary: #475569;
+      --color-accent: #1E3A5F;
+      --color-bg-start: #F8FAFC;
+      --color-bg-end: #E2E8F0;
+      --color-text: #0F2942;
+      --color-text-muted: #334155;
+      --color-border-glass: rgba(255, 255, 255, 0.18);
+      --color-surface: rgba(255, 255, 255, 0.12);
+      --blur-amount: 24px;
+      --glass-opacity: 0.12;
+      --shadow-glass: 0 8px 32px rgba(15, 41, 66, 0.06), 0 2px 8px rgba(15, 41, 66, 0.04);
+      --shadow-glass-lg: 0 12px 48px rgba(15, 41, 66, 0.1), 0 4px 16px rgba(15, 41, 66, 0.06);
+      --radius: 16px;
+      --radius-lg: 24px;
+      --transition: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { -webkit-tap-highlight-color: transparent; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Work Sans', sans-serif;
+      color: var(--color-text);
+      background: linear-gradient(135deg, var(--color-bg-start) 0%, var(--color-bg-end) 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', sans-serif; }
+
+    /* ===== Glassmorphism Core ===== */
+    .glass {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: var(--shadow-glass);
+      border-radius: var(--radius);
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: var(--shadow-glass);
+      border-radius: var(--radius);
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    .glass-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-glass-lg);
+    }
+
+    .glass-strong {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      box-shadow: var(--shadow-glass-lg);
+      border-radius: var(--radius-lg);
+    }
+
+    .glass-input {
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 12px;
+      transition: all var(--transition);
+    }
+
+    .glass-input:focus {
+      background: rgba(255, 255, 255, 0.45);
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.12);
+      outline: none;
+    }
+
+    .glass-input::placeholder { color: rgba(12, 74, 110, 0.4); }
+
+    .glass-nav {
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    /* ===== Buttons ===== */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
+      color: white;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all var(--transition);
+      box-shadow: 0 4px 16px rgba(30, 58, 95, 0.18);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(30, 58, 95, 0.28);
+      filter: brightness(1.05);
+    }
+
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: var(--color-text);
+      border-radius: 12px;
+      font-weight: 500;
+      transition: all var(--transition);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.45);
+      border-color: var(--color-accent);
+    }
+
+    .btn-secondary:active { transform: scale(0.98); }
+
+    /* ===== Background Decorative Blobs ===== */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .blob-1 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #94A3B8 0%, transparent 70%);
+      top: -100px; right: -100px;
+      animation: float-1 20s ease-in-out infinite;
+    }
+
+    .blob-2 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, #475569 0%, transparent 70%);
+      bottom: -80px; left: -80px;
+      animation: float-2 25s ease-in-out infinite;
+    }
+
+    .blob-3 {
+      width: 250px; height: 250px;
+      background: radial-gradient(circle, #1E3A5F 0%, transparent 70%);
+      top: 40%; left: 50%;
+      opacity: 0.12;
+      animation: float-3 30s ease-in-out infinite;
+    }
+
+    @keyframes float-1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-30px, 40px) scale(1.1); }
+    }
+    @keyframes float-2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(40px, -30px) scale(1.15); }
+    }
+    @keyframes float-3 {
+      0%, 100% { transform: translate(-50%, 0) scale(1); }
+      50% { transform: translate(-50%, -40px) scale(1.1); }
+    }
+
+    /* ===== Modal ===== */
+    .modal-overlay {
+      background: rgba(15, 23, 42, 0.3);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .modal-enter { animation: modalIn 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .modal-exit { animation: modalOut 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes modalOut {
+      from { opacity: 1; transform: scale(1) translateY(0); }
+      to { opacity: 0; transform: scale(0.95) translateY(10px); }
+    }
+
+    /* ===== Toast ===== */
+    .toast-enter { animation: toastIn 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .toast-exit { animation: toastOut 200ms ease-out forwards; }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-20px); }
+    }
+
+    /* ===== Loading Spinner ===== */
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2.5px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    .spinner-dark {
+      border-color: rgba(14, 165, 233, 0.2);
+      border-top-color: var(--color-accent);
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== Skeleton Shimmer ===== */
+    .skeleton {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0.15) 25%,
+        rgba(255,255,255,0.35) 50%,
+        rgba(255,255,255,0.15) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+      border-radius: 8px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ===== Match Score Ring ===== */
+    .score-ring { transform: rotate(-90deg); }
+    .score-ring circle { transition: stroke-dashoffset 600ms cubic-bezier(0.16, 1, 0.3, 1); }
+
+    /* ===== View Transitions ===== */
+    .view { animation: viewIn 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes viewIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== Reduced Motion ===== */
+    /* ===== Print / PDF ===== */
+    @media print {
+      body { background: white !important; }
+      .blob, .glass-nav, #toast-container, #modal-container { display: none !important; }
+      .glass, .glass-card, .glass-strong { background: white !important; backdrop-filter: none !important; box-shadow: none !important; border: none !important; }
+      #resume-pdf-page { box-shadow: none !important; border-radius: 0 !important; }
+      a { color: inherit; text-decoration: none; }
+      @page { margin: 12mm; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+      .blob { display: none; }
+    }
+
+    /* ===== Scrollbar ===== */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(14, 165, 233, 0.2);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(14, 165, 233, 0.4); }
+
+    /* ===== Focus States (accessibility) ===== */
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+
+    /* ===== Tab indicator ===== */
+    .tab-active {
+      background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
+      color: white;
+    }
+
+    /* ===== Animated progress bar ===== */
+    .progress-bar { transition: width 800ms cubic-bezier(0.16, 1, 0.3, 1); }
+  </style>
+</head>
+<body class="font-body">
+
+  <!-- Decorative background blobs -->
+  <div class="blob blob-1" aria-hidden="true"></div>
+  <div class="blob blob-2" aria-hidden="true"></div>
+  <div class="blob blob-3" aria-hidden="true"></div>
+
+  <!-- App container -->
+  <div id="app" class="relative z-10 min-h-screen">
+    <!-- Dynamic content renders here -->
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" class="fixed top-6 right-6 z-[9999] space-y-3" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Modal container -->
+  <div id="modal-container"></div>
+
+  <script>
+    /* ==========================================================
+       启鹅 - 求职智能匹配与简历诊断平台
+       Front-end logic with localStorage data persistence
+       ========================================================== */
+
+    // ===== Lucide icon helper =====
+    function icon(name, size = 18, classes = '') {
+      return `<i data-lucide="${name}" class="${classes}" width="${size}" height="${size}"></i>`;
+    }
+
+    function renderIcons() {
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // ===== State Management =====
+    const State = {
+      get(key, def = null) {
+        try {
+          const v = localStorage.getItem('qie_' + key);
+          return v ? JSON.parse(v) : def;
+        } catch { return def; }
+      },
+      set(key, val) {
+        localStorage.setItem('qie_' + key, JSON.stringify(val));
+      },
+      remove(key) {
+        localStorage.removeItem('careergo_' + key);
+      },
+    };
+
+    // ===== Current user & app state =====
+    // Demo 用户：点击「开始演示」时使用，无需输入账号密码
+    const DEMO_USER = {
+      id: 'demo',
+      name: '演示同学',
+      freeAnalysisRemaining: 3,
+      subscriptionType: 'free',
+    };
+    let currentUser = State.get('currentUser', null);
+    let currentView = currentUser ? 'home' : 'landing';
+    let selectedJobForAnalysis = null;
+
+    // ===== Toast =====
+    function toast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const colors = {
+        success: { bg: 'rgba(34,197,94,0.9)', icon: 'check-circle' },
+        error: { bg: 'rgba(239,68,68,0.9)', icon: 'x-circle' },
+        info: { bg: 'rgba(14,165,233,0.9)', icon: 'info' },
+      };
+      const c = colors[type] || colors.info;
+      const el = document.createElement('div');
+      el.className = 'toast-enter flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-medium shadow-lg';
+      el.style.background = c.bg;
+      el.style.backdropFilter = 'blur(20px)';
+      el.innerHTML = `${icon(c.icon, 18)}<span>${message}</span>`;
+      container.appendChild(el);
+      renderIcons();
+      setTimeout(() => {
+        el.className = el.className.replace('toast-enter', 'toast-exit');
+        setTimeout(() => el.remove(), 200);
+      }, 3500);
+    }
+
+    // ===== Modal =====
+    function showModal(content) {
+      const container = document.getElementById('modal-container');
+      container.innerHTML = `
+        <div class="modal-overlay fixed inset-0 z-[1000] flex items-center justify-center p-4" id="modal-overlay" onclick="closeModal(event)">
+          <div class="modal-enter glass-strong w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6 md:p-8" onclick="event.stopPropagation()" role="dialog" aria-modal="true">
+            ${content}
+          </div>
+        </div>
+      `;
+    }
+
+    function closeModal(e) {
+      if (e && e.target !== e.currentTarget) return;
+      const overlay = document.getElementById('modal-overlay');
+      if (!overlay) return;
+      const panel = overlay.querySelector('.modal-enter');
+      if (panel) {
+        panel.className = panel.className.replace('modal-enter', 'modal-exit');
+      }
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 200ms';
+      setTimeout(() => { document.getElementById('modal-container').innerHTML = ''; }, 200);
+    }
+
+    function closeModalDirect() {
+      const overlay = document.getElementById('modal-overlay');
+      if (!overlay) return;
+      const panel = overlay.querySelector('.modal-enter');
+      if (panel) panel.className = panel.className.replace('modal-enter', 'modal-exit');
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 200ms';
+      setTimeout(() => { document.getElementById('modal-container').innerHTML = ''; }, 200);
+    }
+
+    // Close modal on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModalDirect();
+    });
+
+    // ===== Navigation =====
+    function navigate(view) {
+      currentView = view;
+      State.set('currentView', view);
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ===== Layout: Top Nav =====
+    function renderNav() {
+      if (!currentUser) return '';
+      const remaining = currentUser.freeAnalysisRemaining;
+      const subBadge = currentUser.subscriptionType !== 'free'
+        ? `<span class="text-xs px-2 py-0.5 rounded-full bg-brand-dark/20 text-brand-deep font-semibold">${currentUser.subscriptionType === 'monthly' ? '月度' : currentUser.subscriptionType === 'quarterly' ? '季度' : '单次'}</span>`
+        : '';
+
+      return `
+        <nav class="glass-nav sticky top-0 z-50">
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+              <button onclick="navigate('home')" class="flex items-center gap-2 cursor-pointer" aria-label="返回首页">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-light to-brand-dark flex items-center justify-center text-white shadow-md">
+                  ${icon('bird', 20)}
+                </div>
+                <span class="font-heading text-xl font-semibold text-slate-800">CareerGo</span>
+              </button>
+
+              <div class="flex items-center gap-2 md:gap-4">
+                ${subBadge}
+                <button onclick="showPaywallModal()" class="glass px-3 py-1.5 flex items-center gap-2 text-sm hover:bg-white/40 transition cursor-pointer rounded-lg" aria-label="查看订阅套餐" title="点击升级订阅">
+                  ${icon('zap', 15, 'text-amber-600')}
+                  <span class="font-medium text-slate-800">剩余 <span class="font-bold text-brand-dark">${remaining}</span> 次</span>
+                  ${icon('chevron-right', 14, 'text-slate-400')}
+                </button>
+                <div class="flex items-center gap-1">
+                  <button onclick="navigate('home')" class="p-2 rounded-lg hover:bg-white/30 transition cursor-pointer ${currentView === 'home' ? 'bg-white/40' : ''}" aria-label="首页">${icon('home', 20)}</button>
+                  <button onclick="navigate('resume-pdf')" class="p-2 rounded-lg hover:bg-white/30 transition cursor-pointer ${currentView === 'resume-pdf' ? 'bg-white/40' : ''}" aria-label="简历PDF">${icon('file-text', 20)}</button>
+                  <button onclick="navigate('favorites')" class="p-2 rounded-lg hover:bg-white/30 transition cursor-pointer ${currentView === 'favorites' ? 'bg-white/40' : ''}" aria-label="我的收藏">${icon('heart', 20)}</button>
+                  <button onclick="logout()" class="p-2 rounded-lg hover:bg-white/30 transition cursor-pointer" aria-label="退出登录">${icon('log-out', 20)}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </nav>
+      `;
+    }
+
+    // ===== View: Landing (Apple-style product page) =====
+    function viewLanding() {
+      return `
+        <div class="view min-h-screen">
+          <!-- Top bar -->
+          <nav class="glass-nav sticky top-0 z-50">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+              <div class="flex items-center gap-2">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-light to-brand-dark flex items-center justify-center text-white shadow-md">${icon('bird', 20)}</div>
+                <span class="font-heading text-xl font-semibold text-slate-800">CareerGo</span>
+              </div>
+              <button onclick="navigate('login')" class="text-sm text-slate-600 hover:text-slate-800 transition cursor-pointer">登录</button>
+            </div>
+          </nav>
+
+          <!-- Hero -->
+          <section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 text-center">
+            <p class="text-sm tracking-[0.3em] uppercase text-slate-500 mb-6">CareerGo</p>
+            <h1 class="font-heading text-5xl md:text-7xl font-bold text-slate-900 leading-[1.05] tracking-tight">
+              求职这件事，<br>交给 AI 来想。
+            </h1>
+            <p class="text-lg md:text-xl text-slate-500 mt-8 max-w-2xl mx-auto leading-relaxed">
+              上传简历，AI 为你匹配岗位、诊断差距、优化表达。<br>每一次投递，都更接近理想的 offer。
+            </p>
+            <button onclick="navigate('login')" class="btn-primary mt-12 px-10 py-4 text-lg cursor-pointer inline-flex items-center gap-2">
+              立即启程 ${icon('arrow-right', 22)}
+            </button>
+            <p class="text-xs text-slate-400 mt-4">免费体验 · 无需信用卡</p>
+          </section>
+
+          <!-- Feature 1 -->
+          <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div class="glass-card p-8 md:p-14">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div>
+                  <p class="text-sm tracking-widest uppercase text-slate-500 mb-3">智能匹配</p>
+                  <h2 class="font-heading text-3xl md:text-4xl font-bold text-slate-900 leading-tight">懂你的简历，<br>更懂你要的岗位。</h2>
+                  <p class="text-slate-500 mt-5 leading-relaxed">基于技能、学历、经验三维匹配，实时搜索真实岗位。匹配度一目了然，理由清晰可见。</p>
+                </div>
+                <div class="flex justify-center">
+                  <div class="w-40 h-40 rounded-full bg-gradient-to-br from-brand-light/30 to-brand-dark/30 flex items-center justify-center text-brand-dark">${icon('search', 64)}</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Feature 2 -->
+          <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="glass-card p-8 md:p-14">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="flex justify-center order-2 md:order-1">
+                  <div class="w-40 h-40 rounded-full bg-gradient-to-br from-brand-light/30 to-brand-dark/30 flex items-center justify-center text-brand-dark">${icon('file-search', 64)}</div>
+                </div>
+                <div class="order-1 md:order-2">
+                  <p class="text-sm tracking-widest uppercase text-slate-500 mb-3">简历诊断</p>
+                  <h2 class="font-heading text-3xl md:text-4xl font-bold text-slate-900 leading-tight">哪里不足，<br>哪里能更好。</h2>
+                  <p class="text-slate-500 mt-5 leading-relaxed">逐项对比岗位要求，列出匹配与缺失。给出优先级建议与改写示范，让简历刀刀见血。</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Feature 3 -->
+          <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div class="glass-card p-8 md:p-14">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div>
+                  <p class="text-sm tracking-widest uppercase text-slate-500 mb-3">为年轻人而生</p>
+                  <h2 class="font-heading text-3xl md:text-4xl font-bold text-slate-900 leading-tight">从校园到职场，<br>第一步不再难。</h2>
+                  <p class="text-slate-500 mt-5 leading-relaxed">专为在校生与应届毕业生设计。理解你的经历，看见你的潜力，帮你把每一段校园经历讲成加分项。</p>
+                </div>
+                <div class="flex justify-center">
+                  <div class="w-40 h-40 rounded-full bg-gradient-to-br from-brand-light/30 to-brand-dark/30 flex items-center justify-center text-brand-dark">${icon('graduation-cap', 64)}</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- CTA -->
+          <section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+            <h2 class="font-heading text-4xl md:text-5xl font-bold text-slate-900 leading-tight">你的下一份 offer，<br>从这里开始。</h2>
+            <button onclick="navigate('login')" class="btn-primary mt-10 px-10 py-4 text-lg cursor-pointer inline-flex items-center gap-2">
+              立即启程 ${icon('arrow-right', 22)}
+            </button>
+          </section>
+
+          <!-- Footer -->
+          <footer class="border-t border-white/20 py-8 text-center text-xs text-slate-400">
+            <p>CareerGo · 求职智能匹配与简历诊断平台</p>
+            <p class="mt-1">© 2025 CareerGo. 演示项目，仅供参考。</p>
+          </footer>
+        </div>
+      `;
+    }
+
+    // ===== View: Login =====
+    function viewLogin() {
+      return `
+        <div class="view min-h-screen flex items-center justify-center p-4">
+          <div class="glass-strong w-full max-w-md p-8 md:p-10">
+            <div class="text-center mb-8">
+              <div class="inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-light to-brand-dark items-center justify-center text-white shadow-lg mb-4">
+                ${icon('bird', 32)}
+              </div>
+              <h1 class="font-heading text-3xl font-bold text-slate-800">CareerGo</h1>
+              <p class="text-slate-600/70 mt-1 text-sm">AI 求职智能匹配与简历诊断</p>
+            </div>
+
+            <!-- Tab switcher -->
+            <div class="glass flex p-1 mb-6" role="tablist" aria-label="登录方式">
+              <button id="tab-phone" onclick="switchLoginTab('phone')" class="tab-active flex-1 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer" role="tab" aria-selected="true">
+                手机号登录
+              </button>
+              <button id="tab-email" onclick="switchLoginTab('email')" class="flex-1 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer text-slate-600" role="tab" aria-selected="false">
+                邮箱登录
+              </button>
+            </div>
+
+            <!-- Phone login form -->
+            <form id="form-phone" onsubmit="handlePhoneLogin(event)" class="space-y-4">
+              <div>
+                <label for="phone" class="block text-sm font-medium text-slate-700 mb-1.5">手机号</label>
+                <input id="phone" name="phone" type="tel" required pattern="1[3-9]\d{9}" placeholder="请输入手机号" autocomplete="tel" class="glass-input w-full px-4 py-3 text-slate-800" aria-required="true">
+                <p class="text-xs text-slate-500/60 mt-1">用于接收验证码</p>
+              </div>
+              <div>
+                <label for="code" class="block text-sm font-medium text-slate-700 mb-1.5">验证码</label>
+                <div class="flex gap-2">
+                  <input id="code" name="code" type="text" required maxlength="6" placeholder="6位验证码" inputmode="numeric" class="glass-input flex-1 px-4 py-3 text-slate-800" aria-required="true">
+                  <button type="button" id="btn-send-code" onclick="sendCode(event)" class="btn-secondary px-4 py-3 whitespace-nowrap text-sm cursor-pointer">
+                    获取验证码
+                  </button>
+                </div>
+              </div>
+              <button type="submit" class="btn-primary w-full py-3 text-base">登录 / 注册</button>
+            </form>
+
+            <!-- Email login form (hidden by default) -->
+            <form id="form-email" onsubmit="handleEmailLogin(event)" class="space-y-4 hidden">
+              <div>
+                <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">邮箱</label>
+                <input id="email" name="email" type="email" required placeholder="name@example.com" autocomplete="email" class="glass-input w-full px-4 py-3 text-slate-800" aria-required="true">
+              </div>
+              <div>
+                <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">密码</label>
+                <div class="relative">
+                  <input id="password" name="password" type="password" required placeholder="请输入密码" autocomplete="current-password" class="glass-input w-full px-4 py-3 pr-12 text-slate-800" aria-required="true">
+                  <button type="button" onclick="togglePassword('password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-700 cursor-pointer" aria-label="切换密码可见性">
+                    ${icon('eye', 18)}
+                  </button>
+                </div>
+              </div>
+              <button type="submit" class="btn-primary w-full py-3 text-base">登录 / 注册</button>
+            </form>
+
+            <div class="mt-6 glass p-4 rounded-xl text-center">
+              <p class="text-sm text-slate-600">${icon('gift', 16, 'inline text-amber-600 mr-1')}新用户每月享 <span class="font-bold text-brand-dark">3 次</span> 免费分析</p>
+            </div>
+
+            <p class="text-center text-xs text-slate-500/70 mt-6">登录即表示同意<a onclick="showAgreement('terms')" class="text-brand-dark hover:underline cursor-pointer">《用户协议》</a>与<a onclick="showAgreement('privacy')" class="text-brand-dark hover:underline cursor-pointer">《隐私政策》</a></p>
+
+            <!-- Demo 按钮 -->
+            <div class="mt-6 pt-6 border-t border-white/30">
+              <p class="text-center text-xs text-slate-500/70 mb-3">不想登录？直接体验系统功能</p>
+              <button onclick="startDemo()" class="btn-secondary w-full py-3 text-base cursor-pointer inline-flex items-center justify-center gap-2">
+                ${icon('play-circle', 20)} 开始演示
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function switchLoginTab(tab) {
+      const phoneForm = document.getElementById('form-phone');
+      const emailForm = document.getElementById('form-email');
+      const tabPhone = document.getElementById('tab-phone');
+      const tabEmail = document.getElementById('tab-email');
+      if (tab === 'phone') {
+        phoneForm.classList.remove('hidden');
+        emailForm.classList.add('hidden');
+        tabPhone.classList.add('tab-active');
+        tabPhone.classList.remove('text-slate-600');
+        tabEmail.classList.remove('tab-active');
+        tabEmail.classList.add('text-slate-600');
+        tabPhone.setAttribute('aria-selected', 'true');
+        tabEmail.setAttribute('aria-selected', 'false');
+      } else {
+        emailForm.classList.remove('hidden');
+        phoneForm.classList.add('hidden');
+        tabEmail.classList.add('tab-active');
+        tabEmail.classList.remove('text-slate-600');
+        tabPhone.classList.remove('tab-active');
+        tabPhone.classList.add('text-slate-600');
+        tabEmail.setAttribute('aria-selected', 'true');
+        tabPhone.setAttribute('aria-selected', 'false');
+      }
+    }
+
+    function togglePassword(id, btn) {
+      const input = document.getElementById(id);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = icon('eye-off', 18);
+      } else {
+        input.type = 'password';
+        btn.innerHTML = icon('eye', 18);
+      }
+      renderIcons();
+    }
+
+    let codeCountdown = null;
+    function sendCode(e) {
+      e.preventDefault();
+      const phone = document.getElementById('phone').value;
+      if (!/^1[3-9]\d{9}$/.test(phone)) {
+        toast('请输入正确的手机号', 'error');
+        return;
+      }
+      const btn = e.target;
+      btn.disabled = true;
+      let sec = 60;
+      btn.textContent = `${sec}s 后重发`;
+      toast('验证码已发送（模拟：123456）', 'success');
+      codeCountdown = setInterval(() => {
+        sec--;
+        btn.textContent = `${sec}s 后重发`;
+        if (sec <= 0) {
+          clearInterval(codeCountdown);
+          btn.disabled = false;
+          btn.textContent = '获取验证码';
+        }
+      }, 1000);
+    }
+
+    function handlePhoneLogin(e) {
+      e.preventDefault();
+      const phone = document.getElementById('phone').value;
+      const code = document.getElementById('code').value;
+      if (code !== '123456') {
+        toast('验证码错误，请输入 123456', 'error');
+        return;
+      }
+      doLogin({ id: 'u_' + phone, name: '用户' + phone.slice(-4), phone, freeAnalysisRemaining: 3, subscriptionType: 'free' });
+    }
+
+    function handleEmailLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      if (password.length < 6) {
+        toast('密码至少 6 位', 'error');
+        return;
+      }
+      const name = email.split('@')[0];
+      doLogin({ id: 'u_' + email, name, email, freeAnalysisRemaining: 3, subscriptionType: 'free' });
+    }
+
+    function showAgreement(type) {
+      const isTerms = type === 'terms';
+      const title = isTerms ? '用户协议' : '隐私政策';
+      const content = isTerms ? `
+        <h3>一、服务说明</h3>
+        <p>CareerGo（以下简称"本平台"）为用户提供求职智能匹配、简历诊断等 AI 辅助服务。本平台为演示项目，所有数据均存储在用户本地浏览器中。</p>
+        <h3>二、用户行为规范</h3>
+        <p>用户应合法使用本平台服务，不得利用本平台从事任何违反法律法规的活动。用户上传的简历内容应真实有效，不得包含他人隐私信息。</p>
+        <h3>三、知识产权</h3>
+        <p>本平台的界面设计、代码、文案等知识产权归开发者所有。用户上传的简历内容知识产权归用户本人所有。</p>
+        <h3>四、免责声明</h3>
+        <p>本平台提供的岗位匹配与简历诊断结果由 AI 模型生成，仅供参考，不构成求职建议。本平台不对用户因使用服务而产生的任何后果承担责任。</p>
+        <h3>五、服务变更与终止</h3>
+        <p>本平台保留随时修改、暂停或终止服务的权利。本平台为演示项目，可能随时下线，请勿依赖存储重要数据。</p>
+      ` : `
+        <h3>一、信息收集</h3>
+        <p>本平台为前端演示项目，不设后端服务器。用户输入的手机号、邮箱、简历内容等数据仅存储在本地浏览器 localStorage 中，不会上传至任何服务器。</p>
+        <h3>二、信息使用</h3>
+        <p>本地存储的数据仅用于在本平台内提供简历解析、岗位匹配、分析记录等功能。清除浏览器数据即可删除所有个人信息。</p>
+        <h3>三、信息安全</h3>
+        <p>由于数据存储在本地浏览器，请注意保管个人设备。本平台不对本地数据的安全性做保证。建议在公共设备上使用后清除浏览器数据。</p>
+        <h3>四、Cookie 与第三方</h3>
+        <p>本平台使用 localStorage 存储用户数据，不使用 Cookie 追踪。本平台引用了 Tailwind CSS、Lucide Icons、Google Fonts 等第三方资源，这些服务可能记录访问日志。</p>
+        <h3>五、未成年人保护</h3>
+        <p>本平台面向在校大学生及应届毕业生。未成年人应在监护人指导下使用。</p>
+      `;
+
+      showModal(`
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-heading text-2xl font-bold text-slate-800">${title}</h2>
+          <button onclick="closeModalDirect()" class="p-2 rounded-lg hover:bg-white/40 transition cursor-pointer" aria-label="关闭">${icon('x', 20)}</button>
+        </div>
+        <div class="prose prose-sm max-w-none text-slate-600 space-y-4 leading-relaxed" style="max-height:60vh;overflow-y:auto">
+          ${content}
+          <p class="text-xs text-slate-400 mt-6 pt-4 border-t border-white/20">最后更新：2025年6月 · 本协议为演示模板内容</p>
+        </div>
+        <button onclick="closeModalDirect()" class="btn-primary w-full py-2.5 mt-6 cursor-pointer">我已阅读</button>
+      `);
+    }
+
+    function startDemo() {
+      currentUser = { ...DEMO_USER };
+      State.set('currentUser', currentUser);
+      currentView = 'home';
+      toast('已进入演示模式，尽情体验！', 'success');
+      render();
+    }
+
+    function doLogin(user) {
+      // Check existing user to preserve remaining count
+      const existing = State.get('user_' + user.id, null);
+      if (existing) {
+        currentUser = existing;
+      } else {
+        currentUser = user;
+      }
+      State.set('currentUser', currentUser);
+      if (codeCountdown) clearInterval(codeCountdown);
+      toast(`欢迎回来，${currentUser.name}！`, 'success');
+      navigate('home');
+    }
+
+    function logout() {
+      // 清除所有用户操作数据
+      State.remove('currentUser');
+      State.remove('favorites_demo');
+      State.remove('analyses_demo');
+      State.remove('matchForm_demo');
+      // 重置简历库为只含林思远演示简历
+      const demoData = getDemoResumeData();
+      State.set('resumes_demo', [demoData]);
+      State.set('activeResumeId_demo', demoData.id);
+      State.set('resume_demo', demoData);
+      currentUser = null;
+      navigate('landing');
+    }
+
+    // ===== View: Home =====
+    function viewHome() {
+      const resumeList = Resumes.getAll();
+      const resume = Resumes.getActive();
+      const favorites = State.get('favorites_' + currentUser.id, []);
+      const analyses = State.get('analyses_' + currentUser.id, []);
+
+      return `
+        ${renderNav()}
+        <div class="view max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <!-- Welcome banner -->
+          <div class="glass-card p-6 md:p-8 mb-8">
+            <div>
+              <h1 class="font-heading text-2xl md:text-3xl font-bold text-slate-800">你好，${currentUser.name} 👋</h1>
+              <p class="text-slate-600/70 mt-1">让 AI 帮你找到合适的岗位，诊断简历差距</p>
+            </div>
+          </div>
+
+          <!-- Step guide -->
+          <div class="mb-8">
+            <h2 class="font-heading text-lg font-semibold text-slate-800 mb-4">使用流程</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              ${renderStepCard('1', '上传简历', 'upload-cloud', resume ? '已完成' : '未完成', resume)}
+              ${renderStepCard('2', '填写意向', 'target', '输入兴趣与城市', false)}
+              ${renderStepCard('3', '匹配岗位', 'search', `已收藏 ${favorites.length} 个`, favorites.length > 0)}
+              ${renderStepCard('4', '诊断简历', 'file-search', `已分析 ${analyses.length} 次`, analyses.length > 0)}
+            </div>
+          </div>
+
+          <!-- Quick actions -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Resume card -->
+            <div class="glass-card p-6 flex flex-col">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-brand-dark/15 flex items-center justify-center text-brand-dark">${icon('file-text', 22)}</div>
+                <div class="flex-1">
+                  <h3 class="font-heading text-lg font-semibold text-slate-800">我的简历</h3>
+                  <p class="text-xs text-slate-500/70">${resume ? '已上传，可编辑' : '上传简历开始匹配'}</p>
+                </div>
+              </div>
+
+              ${resumeList.length > 0 ? `
+                <!-- Resume switcher -->
+                <div class="glass p-3 rounded-xl mb-3">
+                  <div class="flex items-center gap-2">
+                    ${icon('layers', 16, 'text-brand-dark shrink-0')}
+                    <select id="resume-selector" onchange="switchActiveResume(this.value)" class="glass-input flex-1 px-3 py-2 text-sm text-slate-800 cursor-pointer">
+                      ${resumeList.map(r => `<option value="${r.id}" ${r.id === resume?.id ? 'selected' : ''}>${r.name || '未命名简历'}${r.id === resume?.id ? ' (当前)' : ''}</option>`).join('')}
+                    </select>
+                    <button onclick="renameResume('${resume.id}')" class="p-2 rounded-lg hover:bg-white/40 transition cursor-pointer text-slate-500" title="重命名" aria-label="重命名简历">${icon('edit-3', 16)}</button>
+                    ${resumeList.length > 1 ? `<button onclick="deleteResume('${resume.id}','${resume.name || ''}')" class="p-2 rounded-lg hover:bg-white/40 transition cursor-pointer text-red-400" title="删除" aria-label="删除简历">${icon('trash-2', 16)}</button>` : ''}
+                  </div>
+                </div>
+              ` : ''}
+
+              <!-- Add resume button -->
+              <button onclick="addNewResume()" class="btn-secondary w-full py-2 text-xs mb-3 cursor-pointer ${Resumes.canAdd() ? '' : 'opacity-60'}">
+                ${icon('plus', 14, 'inline mr-1')}
+                ${Resumes.canAdd() ? '新建简历' : '免费用户仅限 1 份简历（升级解锁多份）'}
+              </button>
+
+              ${resume ? `
+                <div class="glass p-4 rounded-xl mb-4 flex-1">
+                  <p class="text-sm text-slate-700"><span class="font-medium">姓名：</span>${resume.name_person || resume.name}</p>
+                  <p class="text-sm text-slate-700 mt-1"><span class="font-medium">学历：</span>${resume.education}</p>
+                  <p class="text-sm text-slate-700 mt-1"><span class="font-medium">专业：</span>${resume.major}</p>
+                  <p class="text-sm text-slate-700 mt-1"><span class="font-medium">技能：</span>${(resume.skills || []).slice(0, 4).join('、')}${resume.skills.length > 4 ? '...' : ''}</p>
+                </div>
+                <div class="flex gap-2">
+                  <button onclick="navigate('resume')" class="btn-secondary flex-1 py-3 text-sm cursor-pointer">${icon('edit-3', 16, 'inline mr-1')}编辑</button>
+                  <button onclick="navigate('match')" class="btn-primary flex-1 py-3 text-sm cursor-pointer">${icon('arrow-right', 16, 'inline mr-1')}去匹配</button>
+                </div>
+              ` : `
+                <div class="flex-1"></div>
+                <button onclick="navigate('resume')" class="btn-primary w-full py-3 text-sm cursor-pointer">${icon('upload-cloud', 18, 'inline mr-1.5')}上传简历</button>
+              `}
+            </div>
+
+            <!-- Match card -->
+            <div class="glass-card p-6 flex flex-col">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-brand-dark/15 flex items-center justify-center text-brand-dark">${icon('search', 22)}</div>
+                <div>
+                  <h3 class="font-heading text-lg font-semibold text-slate-800">岗位匹配</h3>
+                  <p class="text-xs text-slate-500/70">${resume ? '输入意向，开始匹配' : '请先上传简历'}</p>
+                </div>
+              </div>
+              <div class="glass p-4 rounded-xl mb-4 text-center flex-1 flex flex-col justify-center">
+                <p class="text-sm text-slate-500">已收藏岗位</p>
+                <p class="font-heading text-3xl font-bold text-brand-dark mt-1">${favorites.length}</p>
+              </div>
+              <button onclick="navigate('optimize')" class="${resume ? 'btn-primary' : 'btn-secondary opacity-60 cursor-not-allowed'} w-full py-3 text-sm cursor-pointer" ${resume ? '' : 'disabled'}>
+                ${icon('compass', 18, 'inline mr-1.5')}简历针对性优化
+              </button>
+            </div>
+          </div>
+
+          <!-- Recent analyses -->
+          ${analyses.length > 0 ? `
+            <div class="mt-8">
+              <h2 class="font-heading text-lg font-semibold text-slate-800 mb-4">最近分析</h2>
+              <div class="space-y-3">
+                ${analyses.slice(-3).reverse().map(a => `
+                  <div class="glass-card p-4 flex items-center justify-between">
+                    <div>
+                      <p class="font-medium text-slate-800">${a.jobTitle} · ${a.company}</p>
+                      <p class="text-xs text-slate-500 mt-0.5">${new Date(a.analyzedAt).toLocaleString('zh-CN')}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <span class="text-2xl font-bold ${a.matchRate >= 80 ? 'text-green-600' : a.matchRate >= 60 ? 'text-brand-dark' : a.matchRate >= 40 ? 'text-amber-600' : 'text-slate-400'}">${a.matchRate}%</span>
+                      <button onclick="viewAnalysis('${a.id}')" class="btn-secondary px-3 py-1.5 text-xs cursor-pointer">查看</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function renderStepCard(num, title, iconN, status, done) {
+      return `
+        <div class="glass-card p-4 ${done ? 'border-brand-dark/30' : ''}">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full ${done ? 'bg-green-500 text-white' : 'bg-brand-dark/15 text-brand-dark'} flex items-center justify-center font-semibold text-sm">
+              ${done ? icon('check', 18) : num}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-slate-800 text-sm truncate">${title}</p>
+              <p class="text-xs text-slate-500/70 truncate">${status}</p>
+            </div>
+            ${icon(iconN, 18, 'text-slate-400 shrink-0')}
+          </div>
+        </div>
+      `;
+    }
+
+    // ===== View: Resume Upload & Parse =====
+    function viewResume() {
+      const resumeList = Resumes.getAll();
+      const resume = Resumes.getActive();
+      return `
+        ${renderNav()}
+        <div class="view max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <button onclick="navigate('home')" class="btn-secondary px-3 py-1.5 text-sm mb-6 cursor-pointer inline-flex items-center gap-1">
+            ${icon('arrow-left', 16)} 返回
+          </button>
+
+          <h1 class="font-heading text-2xl font-bold text-slate-800 mb-2">我的简历</h1>
+          <p class="text-slate-600/70 mb-6">上传简历自动解析，或手动录入信息</p>
+
+          ${resumeList.length > 0 ? `
+            <!-- Resume switcher -->
+            <div class="glass p-3 rounded-xl mb-4">
+              <div class="flex items-center gap-2">
+                ${icon('layers', 16, 'text-brand-dark shrink-0')}
+                <select id="resume-selector-page" onchange="switchActiveResume(this.value)" class="glass-input flex-1 px-3 py-2 text-sm text-slate-800 cursor-pointer">
+                  ${resumeList.map(r => `<option value="${r.id}" ${r.id === resume?.id ? 'selected' : ''}>${r.name || '未命名简历'}${r.id === resume?.id ? ' (当前)' : ''}</option>`).join('')}
+                </select>
+                ${resume ? `<button onclick="renameResume('${resume.id}')" class="p-2 rounded-lg hover:bg-white/40 transition cursor-pointer text-slate-500" title="重命名" aria-label="重命名简历">${icon('edit-3', 16)}</button>` : ''}
+                ${resumeList.length > 1 ? `<button onclick="deleteResume('${resume?.id}','${resume?.name || ''}')" class="p-2 rounded-lg hover:bg-white/40 transition cursor-pointer text-red-400" title="删除" aria-label="删除简历">${icon('trash-2', 16)}</button>` : ''}
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Add resume button -->
+          <button onclick="addNewResume()" class="btn-secondary w-full py-2 text-xs mb-4 cursor-pointer ${Resumes.canAdd() ? '' : 'opacity-60'}">
+            ${icon('plus', 14, 'inline mr-1')}
+            ${Resumes.canAdd() ? '新建简历' : '免费用户仅限 1 份简历（升级解锁多份）'}
+          </button>
+
+          <!-- Tab switcher -->
+          <div class="glass flex p-1 mb-6" role="tablist" aria-label="简历录入方式">
+            <button id="tab-upload" onclick="switchResumeTab('upload')" class="tab-active flex-1 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer" role="tab" aria-selected="true">
+              ${icon('upload-cloud', 16, 'inline mr-1.5')}上传解析
+            </button>
+            <button id="tab-manual" onclick="switchResumeTab('manual')" class="flex-1 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer text-slate-600" role="tab" aria-selected="false">
+              ${icon('edit', 16, 'inline mr-1.5')}手动录入
+            </button>
+          </div>
+
+          <!-- Upload panel -->
+          <div id="panel-upload">
+            <!-- Upload zone -->
+            <div id="upload-zone" class="glass-card p-8 mb-6 border-2 border-dashed border-brand-dark/20 text-center cursor-pointer hover:border-brand-dark/50 transition" onclick="simulateUpload()" role="button" tabindex="0" aria-label="点击上传简历">
+              <div class="w-16 h-16 mx-auto rounded-2xl bg-brand-dark/10 flex items-center justify-center text-brand-dark mb-4">
+                ${icon('upload-cloud', 32)}
+              </div>
+              <p class="font-medium text-slate-800 mb-1">点击上传简历文件</p>
+              <p class="text-sm text-slate-500/70">支持 PDF、DOCX、TXT · 最大 5MB</p>
+              <p class="text-xs text-slate-400/50 mt-3">（演示：点击将模拟上传并解析）</p>
+            </div>
+
+            <!-- Parsing loading state -->
+            <div id="parsing-state" class="hidden glass-card p-8 mb-6">
+              <div class="flex items-center justify-center gap-3 mb-4">
+                <div class="spinner spinner-dark"></div>
+                <span class="font-medium text-slate-800">正在解析简历...</span>
+              </div>
+              <div class="space-y-2 max-w-md mx-auto">
+                <div class="skeleton h-4 w-3/4"></div>
+                <div class="skeleton h-4 w-1/2"></div>
+                <div class="skeleton h-4 w-2/3"></div>
+                <div class="skeleton h-4 w-3/5"></div>
+              </div>
+            </div>
+
+            <!-- Parsed result (editable) -->
+            ${resume ? renderResumeEditor(resume) : '<div id="resume-editor"></div>'}
+          </div>
+
+          <!-- Manual entry panel -->
+          <div id="panel-manual" class="hidden">
+            ${renderManualForm(resume)}
+          </div>
+        </div>
+      `;
+    }
+
+    function switchResumeTab(tab) {
+      const panelUpload = document.getElementById('panel-upload');
+      const panelManual = document.getElementById('panel-manual');
+      const tabUpload = document.getElementById('tab-upload');
+      const tabManual = document.getElementById('tab-manual');
+      if (tab === 'upload') {
+        panelUpload.classList.remove('hidden');
+        panelManual.classList.add('hidden');
+        tabUpload.classList.add('tab-active');
+        tabUpload.classList.remove('text-slate-600');
+        tabManual.classList.remove('tab-active');
+        tabManual.classList.add('text-slate-600');
+        tabUpload.setAttribute('aria-selected', 'true');
+        tabManual.setAttribute('aria-selected', 'false');
+      } else {
+        panelManual.classList.remove('hidden');
+        panelUpload.classList.add('hidden');
+        tabManual.classList.add('tab-active');
+        tabManual.classList.remove('text-slate-600');
+        tabUpload.classList.remove('tab-active');
+        tabUpload.classList.add('text-slate-600');
+        tabManual.setAttribute('aria-selected', 'true');
+        tabUpload.setAttribute('aria-selected', 'false');
+        // Initialize validation
+        validateManualForm();
+      }
+    }
+
+    function renderResumeEditor(resume) {
+      return `
+        <div id="resume-editor" class="glass-card p-6 md:p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="font-heading text-xl font-semibold text-slate-800">解析结果</h2>
+            <span class="text-xs px-3 py-1 rounded-full bg-green-500/20 text-green-700 font-medium">${icon('check-circle', 14, 'inline mr-1')}解析成功</span>
+          </div>
+
+          <form onsubmit="saveResume(event)" class="space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="r-name" class="block text-sm font-medium text-slate-700 mb-1.5">姓名</label>
+                <input id="r-name" type="text" required value="${resume.name || ''}" class="glass-input w-full px-4 py-2.5 text-slate-800">
+              </div>
+              <div>
+                <label for="r-education" class="block text-sm font-medium text-slate-700 mb-1.5">学历</label>
+                <select id="r-education" class="glass-input w-full px-4 py-2.5 text-slate-800">
+                  ${['大专', '本科', '硕士', '博士'].map(e => `<option value="${e}" ${resume.education === e ? 'selected' : ''}>${e}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label for="r-graduation" class="block text-sm font-medium text-slate-700 mb-1.5">毕业时间</label>
+                <input id="r-graduation" type="month" value="${resume.graduationDate || ''}" class="glass-input w-full px-4 py-2.5 text-slate-800">
+              </div>
+              <div>
+                <label for="r-major" class="block text-sm font-medium text-slate-700 mb-1.5">专业</label>
+                <input id="r-major" type="text" value="${resume.major || ''}" class="glass-input w-full px-4 py-2.5 text-slate-800">
+              </div>
+            </div>
+
+            <div>
+              <label for="r-skills" class="block text-sm font-medium text-slate-700 mb-1.5">技能关键词 <span class="text-xs text-slate-400/70">（用逗号分隔）</span></label>
+              <input id="r-skills" type="text" value="${(resume.skills || []).join(', ')}" placeholder="如：JavaScript, React, Python" class="glass-input w-full px-4 py-2.5 text-slate-800">
+            </div>
+
+            <div>
+              <label for="r-experience" class="block text-sm font-medium text-slate-700 mb-1.5">经历摘要</label>
+              <textarea id="r-experience" rows="3" class="glass-input w-full px-4 py-2.5 text-slate-800 resize-none">${resume.experienceSummary || ''}</textarea>
+            </div>
+
+            <div class="flex gap-3 pt-2">
+              <button type="submit" class="btn-primary flex-1 py-3 cursor-pointer">${icon('save', 18, 'inline mr-1.5')}保存简历</button>
+              <button type="button" onclick="reParse()" class="btn-secondary px-6 py-3 cursor-pointer">${icon('refresh-cw', 18, 'inline mr-1')}重新解析</button>
+            </div>
+          </form>
+        </div>
+      `;
+    }
+
+    function renderManualForm(resume) {
+      const r = resume || {};
+      return `
+        <div class="glass-card p-6 md:p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="font-heading text-xl font-semibold text-slate-800">手动录入简历</h2>
+            ${resume ? `<span class="text-xs px-3 py-1 rounded-full bg-brand-dark/15 text-brand-dark font-medium">${icon('edit', 14, 'inline mr-1')}编辑中</span>` : ''}
+          </div>
+
+          <p class="text-xs text-slate-500/70 mb-5"><span class="text-red-500">*</span> 为必填项</p>
+
+          <form id="manual-form" onsubmit="saveManualResume(event)" class="space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="m-name" class="block text-sm font-medium text-slate-700 mb-1.5">姓名 <span class="text-red-500">*</span></label>
+                <input id="m-name" type="text" value="${r.name || ''}" placeholder="请输入姓名" class="glass-input w-full px-4 py-2.5 text-slate-800" oninput="validateManualForm()">
+              </div>
+              <div>
+                <label for="m-education" class="block text-sm font-medium text-slate-700 mb-1.5">学历</label>
+                <select id="m-education" class="glass-input w-full px-4 py-2.5 text-slate-800" onchange="validateManualForm()">
+                  ${['大专', '本科', '硕士', '博士'].map(e => `<option value="${e}" ${r.education === e ? 'selected' : ''}>${e}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label for="m-graduation" class="block text-sm font-medium text-slate-700 mb-1.5">毕业时间</label>
+                <input id="m-graduation" type="month" value="${r.graduationDate || ''}" class="glass-input w-full px-4 py-2.5 text-slate-800">
+              </div>
+              <div>
+                <label for="m-major" class="block text-sm font-medium text-slate-700 mb-1.5">专业 <span class="text-red-500">*</span></label>
+                <input id="m-major" type="text" value="${r.major || ''}" placeholder="如：计算机科学与技术" class="glass-input w-full px-4 py-2.5 text-slate-800" oninput="validateManualForm()">
+              </div>
+            </div>
+
+            <div>
+              <label for="m-skills" class="block text-sm font-medium text-slate-700 mb-1.5">技能关键词 <span class="text-red-500">*</span> <span class="text-xs text-slate-400/70">（用逗号分隔）</span></label>
+              <input id="m-skills" type="text" value="${(r.skills || []).join(', ')}" placeholder="如：JavaScript, React, Python" class="glass-input w-full px-4 py-2.5 text-slate-800" oninput="validateManualForm()">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="m-interest" class="block text-sm font-medium text-slate-700 mb-1.5">兴趣方向 <span class="text-red-500">*</span></label>
+                <input id="m-interest" type="text" value="${r.interest || ''}" placeholder="如：前端开发、数据分析" class="glass-input w-full px-4 py-2.5 text-slate-800" oninput="validateManualForm()">
+              </div>
+              <div>
+                <label for="m-city" class="block text-sm font-medium text-slate-700 mb-1.5">期望城市</label>
+                <input id="m-city" type="text" value="${r.city || ''}" placeholder="如：北京、上海、深圳" class="glass-input w-full px-4 py-2.5 text-slate-800">
+              </div>
+            </div>
+
+            <div>
+              <label for="m-fulltext" class="block text-sm font-medium text-slate-700 mb-1.5">简历全文</label>
+              <textarea id="m-fulltext" rows="5" placeholder="可粘贴完整简历内容（选填）" class="glass-input w-full px-4 py-2.5 text-slate-800 resize-none">${r.experienceSummary || ''}</textarea>
+            </div>
+
+            <div class="flex gap-3 pt-2">
+              <button type="submit" id="btn-save-manual" class="btn-primary flex-1 py-3 cursor-pointer" disabled>${icon('save', 18, 'inline mr-1.5')}保存简历</button>
+              ${resume ? `<button type="button" onclick="navigate('home')" class="btn-secondary px-6 py-3 cursor-pointer">取消</button>` : ''}
+            </div>
+          </form>
+        </div>
+      `;
+    }
+
+    function validateManualForm() {
+      const name = document.getElementById('m-name');
+      const major = document.getElementById('m-major');
+      const skills = document.getElementById('m-skills');
+      const interest = document.getElementById('m-interest');
+      const btn = document.getElementById('btn-save-manual');
+      if (!name || !btn) return;
+      const valid = name.value.trim() && major.value.trim() && skills.value.trim() && interest.value.trim();
+      btn.disabled = !valid;
+      btn.classList.toggle('opacity-50', !valid);
+      btn.classList.toggle('cursor-not-allowed', !valid);
+    }
+
+    function saveManualResume(e) {
+      e.preventDefault();
+      const existing = Resumes.getActive() || {};
+      const resume = {
+        ...existing,
+        name: document.getElementById('m-name').value.trim(),
+        name_person: document.getElementById('m-name').value.trim(),
+        education: document.getElementById('m-education').value,
+        graduationDate: document.getElementById('m-graduation').value,
+        major: document.getElementById('m-major').value.trim(),
+        skills: document.getElementById('m-skills').value.split(/[,，]/).map(s => s.trim()).filter(Boolean),
+        interest: document.getElementById('m-interest').value.trim(),
+        city: document.getElementById('m-city').value.trim(),
+        experienceSummary: document.getElementById('m-fulltext').value,
+        uploadedAt: existing.uploadedAt || Date.now(),
+        updatedAt: Date.now(),
+      };
+      Resumes.upsert(resume);
+      toast('简历已保存', 'success');
+      navigate('home');
+    }
+
+    function simulateUpload() {
+      const zone = document.getElementById('upload-zone');
+      const parsing = document.getElementById('parsing-state');
+      zone.classList.add('hidden');
+      parsing.classList.remove('hidden');
+
+      // Simulate parsing delay
+      setTimeout(() => {
+        // 始终上传林思远的完整演示简历
+        const mockResume = getDemoResumeData();
+        const existing = Resumes.getActive() || {};
+        mockResume.id = existing.id || mockResume.id;
+        mockResume.name = existing.name || mockResume.name;
+        mockResume.name_person = '林思远';
+        Resumes.upsert(mockResume);
+        Resumes.setActive(mockResume.id);
+        parsing.classList.add('hidden');
+        toast('简历解析成功！', 'success');
+        render();
+      }, 2500);
+    }
+
+    function reParse() {
+      const active = Resumes.getActive();
+      if (active) Resumes.remove(active.id);
+      State.remove('resume_' + currentUser.id);
+      render();
+      setTimeout(() => simulateUpload(), 100);
+    }
+
+    function saveResume(e) {
+      e.preventDefault();
+      const existing = Resumes.getActive() || {};
+      const resume = {
+        ...existing,
+        name: document.getElementById('r-name').value,
+        name_person: document.getElementById('r-name').value,
+        education: document.getElementById('r-education').value,
+        graduationDate: document.getElementById('r-graduation').value,
+        major: document.getElementById('r-major').value,
+        skills: document.getElementById('r-skills').value.split(/[,，]/).map(s => s.trim()).filter(Boolean),
+        experienceSummary: document.getElementById('r-experience').value,
+        uploadedAt: existing.uploadedAt || Date.now(),
+        updatedAt: Date.now(),
+      };
+      Resumes.upsert(resume);
+      toast('简历已保存', 'success');
+      navigate('home');
+    }
+
+    // ===== Multi-Resume Data Layer =====
+    // Supports multiple resumes for subscribed users; single resume for free users.
+    // Backward-compatible: auto-migrates legacy single resume to array format.
+    const Resumes = {
+      getAll() {
+        let list = State.get('resumes_' + currentUser.id, null);
+        if (!list) {
+          // Migrate legacy single resume
+          const legacy = State.get('resume_' + currentUser.id, null);
+          if (legacy) {
+            list = [{ id: 'r_' + Date.now(), name: '默认简历', ...legacy }];
+            State.set('resumes_' + currentUser.id, list);
+          } else {
+            list = [];
+          }
+        }
+        return list;
+      },
+      getActiveId() {
+        return State.get('activeResumeId_' + currentUser.id, null);
+      },
+      getActive() {
+        const list = this.getAll();
+        const activeId = this.getActiveId();
+        if (list.length === 0) return null;
+        return list.find(r => r.id === activeId) || list[0];
+      },
+      setActive(id) {
+        State.set('activeResumeId_' + currentUser.id, id);
+      },
+      upsert(resume) {
+        const list = this.getAll();
+        const idx = list.findIndex(r => r.id === resume.id);
+        if (idx >= 0) {
+          list[idx] = resume;
+        } else {
+          resume.id = resume.id || ('r_' + Date.now());
+          list.push(resume);
+        }
+        State.set('resumes_' + currentUser.id, list);
+        // Sync legacy key for backward compat
+        State.set('resume_' + currentUser.id, resume);
+        return resume;
+      },
+      remove(id) {
+        let list = this.getAll();
+        list = list.filter(r => r.id !== id);
+        State.set('resumes_' + currentUser.id, list);
+        if (this.getActiveId() === id) {
+          const newActive = list[0] || null;
+          State.set('activeResumeId_' + currentUser.id, newActive ? newActive.id : null);
+          if (newActive) State.set('resume_' + currentUser.id, newActive);
+          else State.remove('resume_' + currentUser.id);
+        }
+        return list;
+      },
+      count() {
+        return this.getAll().length;
+      },
+      canAdd() {
+        // Free users: max 1 resume; Subscribed: unlimited
+        if (currentUser.subscriptionType !== 'free') return true;
+        return this.count() < 1;
+      },
+    };
+
+    function applyRewriteToResume(analysisId) {
+      const analyses = State.get('analyses_' + currentUser.id, []);
+      const analysis = analyses.find(a => a.id === analysisId);
+      if (!analysis) return;
+      const resume = Resumes.getActive();
+      if (!resume) {
+        toast('请先上传简历', 'error');
+        return;
+      }
+      // 从 rewriteExample 中提取【优化后】部分的文字
+      let optimizedText = analysis.rewriteExample || '';
+      const afterMatch = optimizedText.match(/【优化后】([\s\S]*)/);
+      if (afterMatch) {
+        optimizedText = afterMatch[1].trim();
+      }
+      // 将优化后的文字追加到原有简历内容后面
+      const existing = resume.experienceSummary || '';
+      resume.experienceSummary = existing ? existing + '\n\n' + optimizedText : optimizedText;
+      resume.updatedAt = Date.now();
+      Resumes.upsert(resume);
+      toast('优化内容已追加到简历', 'success');
+      navigate('resume');
+    }
+
+    function switchActiveResume(id) {
+      Resumes.setActive(id);
+      const r = Resumes.getActive();
+      if (r) State.set('resume_' + currentUser.id, r);
+      toast('已切换简历', 'info');
+      render();
+    }
+
+    function deleteResume(id, name) {
+      const list = Resumes.getAll();
+      if (list.length <= 1) {
+        toast('至少保留一份简历', 'error');
+        return;
+      }
+      if (!confirm(`确定删除「${name || '简历'}」吗？`)) return;
+      Resumes.remove(id);
+      toast('简历已删除', 'info');
+      render();
+    }
+
+    function addNewResume() {
+      if (!Resumes.canAdd()) {
+        toast('免费用户仅可创建 1 份简历，升级会员可创建多份', 'error');
+        showPaywallModal();
+        return;
+      }
+      const newResume = {
+        id: 'r_' + Date.now(),
+        name: '简历 ' + (Resumes.count() + 1),
+        name_person: '',
+        education: '本科',
+        graduationDate: '',
+        major: '',
+        skills: [],
+        interest: '',
+        city: '',
+        experienceSummary: '',
+        uploadedAt: Date.now(),
+      };
+      Resumes.upsert(newResume);
+      Resumes.setActive(newResume.id);
+      toast('已创建新简历，请填写信息', 'success');
+      navigate('resume');
+    }
+
+    // ===== 预置演示简历（林思远完整简历）=====
+    function getDemoResumeData() {
+      return {
+        id: 'r_demo_linsiyuan',
+        name: '林思远简历',
+        name_person: '林思远',
+        education: '本科',
+        graduationDate: '2025-06',
+        major: '计算机科学与技术',
+        interest: '前端开发工程师（应届）',
+        city: '深圳 / 北京',
+        skills: ['HTML5', 'CSS3', 'JavaScript', 'TypeScript', 'React', 'Next.js', 'Vue 3', 'Nuxt.js', 'Tailwind CSS', 'Sass', 'Node.js', 'Express', 'Vite', 'Webpack', 'Git', 'ESLint', 'MySQL', '微信小程序', 'ECharts', 'React Query'],
+        skillsGrouped: {
+          '前端核心': 'HTML5、CSS3、JavaScript (ES6+)、TypeScript',
+          '框架库': 'React、Next.js、Vue 3、Nuxt.js',
+          '样式工具': 'Tailwind CSS、Sass、Styled Components',
+          '工程化': 'Vite、Webpack、Git、ESLint',
+          '后端了解': 'Node.js、Express、MySQL 基础',
+          '其他': '微信小程序、ECharts、React Query',
+        },
+        experienceSummary: '【校园经历】青柠集市校园电商平台前端负责人，React+TS 技术栈，服务3000+学生，首屏优化提速40%。【实习经历】腾讯PCG前端开发实习生，参与腾讯新闻后台开发，Vue3重构+ECharts数据看板+表格虚拟滚动优化，获优秀实习生评价。',
+        campusExperience: [
+          { title: '校园电商平台「青柠集市」· 前端负责人', period: '2022.10 - 2023.06', items: [
+            '主导 React + TypeScript + Tailwind 二手交易平台前端，独立完成商品发布、搜索、聊天、订单模块',
+            '引入 React Query 缓存，首屏 LCP 从 2.1s 降至 1.3s；图片懒加载 + WebP，体积减少 35%',
+            '平台服务全校 3000+ 学生，日均交易 50+ 笔',
+          ]},
+          { title: '计算机学院学生会 · 技术部部长', period: '2022.09 - 2023.09', items: [
+            '用 Vue 3 + Nuxt.js 重构学院官网；组织前端工作坊 3 场，培训 80+ 人',
+            '搭建活动签到小程序，覆盖全院 1200+ 学生',
+          ]},
+        ],
+        internshipExperience: [
+          { title: '腾讯 · PCG 平台运营部 · 前端开发实习生', period: '2024.07 - 2024.10', items: [
+            '参与腾讯新闻内容管理后台开发（Vue 3 + Vite + Element Plus）',
+            '将 jQuery 代码迁移至 Vue 3 Composition API，代码量减少 30%',
+            '用 ECharts 开发数据看板，实现 8 类指标可视化；优化表格虚拟滚动，万级数据 FPS 从 <15 提升至 60',
+            '提交 12 个 PR，修复线上缺陷 7 个，获「优秀实习生」评价',
+          ]},
+          { title: '某本地创业公司 · 兼职前端开发', period: '2023.07 - 2024.01', items: [
+            '远程参与 React + Next.js + TS 的 SaaS 客服系统，独立开发工单列表与客户详情页',
+            '封装通用业务组件库 15 个，被团队复用',
+          ]},
+        ],
+        selfEvaluation: [
+          '扎实前端基础，熟悉 React/Vue 双栈，有大型项目与重构经验',
+          '注重性能优化与用户体验，有量化数据支撑的优化成果',
+          '腾讯实习经历让我熟悉大厂研发流程与代码规范',
+          '学习能力强，沟通顺畅，有团队协作经验',
+        ],
+        awards: 'GPA 3.7/4.0（专业前 15%）；2023 校级一等奖学金；2023 蓝桥杯省赛一等奖；2022 计算机设计大赛省级二等奖',
+        uploadedAt: 1719600000000,
+      };
+    }
+
+    function initDemoResume() {
+      const demoData = getDemoResumeData();
+      let list = State.get('resumes_demo', null);
+      if (!list || list.length === 0) {
+        list = [demoData];
+        State.set('resumes_demo', list);
+        State.set('activeResumeId_demo', demoData.id);
+        State.set('resume_demo', demoData);
+      }
+    }
+
+    function renameResume(id) {
+      const list = Resumes.getAll();
+      const r = list.find(x => x.id === id);
+      if (!r) return;
+      const newName = prompt('请输入简历名称', r.name || '我的简历');
+      if (newName && newName.trim()) {
+        r.name = newName.trim();
+        Resumes.upsert(r);
+        toast('简历已重命名', 'success');
+        render();
+      }
+    }
+
+    // ===== View: Job Match =====
+    function viewMatch() {
+      const resume = Resumes.getActive();
+      if (!resume) {
+        return `
+          ${renderNav()}
+          <div class="view max-w-2xl mx-auto px-4 py-16 text-center">
+            <div class="glass-card p-8">
+              <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/15 flex items-center justify-center text-amber-600 mb-4">${icon('alert-circle', 32)}</div>
+              <h2 class="font-heading text-xl font-semibold text-slate-800 mb-2">请先上传简历</h2>
+              <p class="text-slate-500/70 mb-6">上传简历后才能进行岗位匹配</p>
+              <button onclick="navigate('resume')" class="btn-primary px-6 py-2.5 cursor-pointer">${icon('upload-cloud', 18, 'inline mr-1.5')}去上传简历</button>
+            </div>
+          </div>
+        `;
+      }
+
+      const matchForm = State.get('matchForm_' + currentUser.id, { education: resume.education, major: resume.major, interest: '', city: '' });
+
+      return `
+        ${renderNav()}
+        <div class="view max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <button onclick="navigate('home')" class="btn-secondary px-3 py-1.5 text-sm mb-6 cursor-pointer inline-flex items-center gap-1">
+            ${icon('arrow-left', 16)} 返回
+          </button>
+
+          <h1 class="font-heading text-2xl font-bold text-slate-800 mb-2">岗位智能匹配</h1>
+          <p class="text-slate-600/70 mb-8">填写求职意向，AI 为你匹配最合适的岗位</p>
+
+          <!-- Match form -->
+          <div class="glass-card p-6 md:p-8 mb-6">
+            <form onsubmit="searchJobs(event)" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="m-education" class="block text-sm font-medium text-slate-700 mb-1.5">学历</label>
+                  <select id="m-education" class="glass-input w-full px-4 py-2.5 text-slate-800">
+                    ${['大专', '本科', '硕士', '博士'].map(e => `<option value="${e}" ${matchForm.education === e ? 'selected' : ''}>${e}</option>`).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label for="m-major" class="block text-sm font-medium text-slate-700 mb-1.5">专业</label>
+                  <input id="m-major" type="text" value="${matchForm.major || ''}" class="glass-input w-full px-4 py-2.5 text-slate-800">
+                </div>
+                <div>
+                  <label for="m-interest" class="block text-sm font-medium text-slate-700 mb-1.5">兴趣方向</label>
+                  <input id="m-interest" type="text" required value="${matchForm.interest || ''}" placeholder="如：前端开发、数据分析" class="glass-input w-full px-4 py-2.5 text-slate-800">
+                </div>
+                <div>
+                  <label for="m-city" class="block text-sm font-medium text-slate-700 mb-1.5">期望城市</label>
+                  <input id="m-city" type="text" value="${matchForm.city || ''}" placeholder="如：北京、上海、深圳" class="glass-input w-full px-4 py-2.5 text-slate-800">
+                </div>
+              </div>
+              <button type="submit" id="btn-search" class="btn-primary w-full py-3 cursor-pointer">${icon('search', 18, 'inline mr-1.5')}开始匹配</button>
+            </form>
+          </div>
+
+          <!-- Results container -->
+          <div id="results-container"></div>
+        </div>
+      `;
+    }
+
+    // Mock job database
+    const MOCK_JOBS = [
+      { id: 'j1', title: '前端开发工程师', company: '字节跳动', city: '北京', salary: '20-35K', education: '本科', skills: ['JavaScript', 'React', 'TypeScript', 'CSS'], experience: '应届', desc: '负责抖音电商前端开发，使用 React 技术栈。参与大型项目架构设计，与产品、设计紧密协作。', tags: ['大厂', 'React', '电商'], url: 'https://www.zhipin.com/web/geek/job?query=前端开发&city=101010100' },
+      { id: 'j2', title: '前端开发实习生', company: '腾讯', city: '深圳', salary: '300-400/天', education: '本科', skills: ['JavaScript', 'Vue', 'HTML', 'CSS'], experience: '实习', desc: '参与微信小程序开发，使用 Vue 和原生小程序技术。团队氛围好，mentor 一对一指导。', tags: ['大厂', 'Vue', '小程序'], url: 'https://www.zhipin.com/web/geek/job?query=前端实习&city=101280600' },
+      { id: 'j3', title: 'Java 后端开发', company: '阿里巴巴', city: '杭州', salary: '18-30K', education: '本科', skills: ['Java', 'Spring', 'MySQL', 'Redis'], experience: '应届', desc: '参与淘宝交易系统开发，高并发场景实践。使用 Spring Cloud 微服务架构。', tags: ['大厂', 'Java', '高并发'], url: 'https://www.zhipin.com/web/geek/job?query=Java后端&city=101210100' },
+      { id: 'j4', title: '数据分析师', company: '美团', city: '北京', salary: '15-25K', education: '本科', skills: ['Python', 'SQL', 'Excel', '统计学'], experience: '应届', desc: '负责外卖业务数据分析，使用 SQL 和 Python 进行数据建模。输出业务洞察报告。', tags: ['数据', 'Python', 'SQL'], url: 'https://www.zhipin.com/web/geek/job?query=数据分析&city=101010100' },
+      { id: 'j5', title: '全栈开发工程师', company: '某创业公司', city: '上海', salary: '15-25K', education: '本科', skills: ['JavaScript', 'Node.js', 'React', 'MySQL'], experience: '应届', desc: '负责 SaaS 产品全栈开发，前端 React + 后端 Node.js。快速成长机会多。', tags: ['创业', '全栈', 'Node.js'], url: 'https://www.zhipin.com/web/geek/job?query=全栈开发&city=101020100' },
+      { id: 'j6', title: '前端开发工程师', company: '小红书', city: '上海', salary: '18-30K', education: '本科', skills: ['JavaScript', 'React', 'TypeScript', 'Webpack'], experience: '应届', desc: '参与小红书社区前端开发，使用 React + TypeScript。关注性能优化与用户体验。', tags: ['社区', 'React', 'TypeScript'], url: 'https://www.zhipin.com/web/geek/job?query=前端开发&city=101020100' },
+      { id: 'j7', title: '测试开发工程师', company: '百度', city: '北京', salary: '16-26K', education: '本科', skills: ['Python', 'Java', '自动化测试', 'Linux'], experience: '应届', desc: '负责搜索业务测试自动化，使用 Python 和 Selenium。保障产品质量。', tags: ['大厂', '测试', 'Python'], url: 'https://www.zhipin.com/web/geek/job?query=测试开发&city=101010100' },
+      { id: 'j8', title: '产品经理', company: '网易', city: '杭州', salary: '15-22K', education: '本科', skills: ['需求分析', '原型设计', '数据分析', '沟通'], experience: '应届', desc: '负责网易云音乐产品迭代，从用户调研到功能上线全流程参与。', tags: ['大厂', '产品', '音乐'], url: 'https://www.zhipin.com/web/geek/job?query=产品经理&city=101210100' },
+    ];
+
+    function searchJobs(e) {
+      e.preventDefault();
+      const form = {
+        education: document.getElementById('m-education').value,
+        major: document.getElementById('m-major').value,
+        interest: document.getElementById('m-interest').value,
+        city: document.getElementById('m-city').value,
+      };
+      State.set('matchForm_' + currentUser.id, form);
+
+      const btn = document.getElementById('btn-search');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> 正在搜索...';
+
+      const container = document.getElementById('results-container');
+      container.innerHTML = `
+        <div class="glass-card p-8 text-center">
+          <div class="flex items-center justify-center gap-3 mb-4">
+            <div class="spinner spinner-dark"></div>
+            <span class="font-medium text-slate-800">正在搜索并计算匹配度...</span>
+          </div>
+          <div class="space-y-2 max-w-md mx-auto">
+            <div class="skeleton h-16 w-full"></div>
+            <div class="skeleton h-16 w-full"></div>
+            <div class="skeleton h-16 w-full"></div>
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => {
+        const resume = Resumes.getActive();
+        const matched = MOCK_JOBS.map(job => {
+          const score = calculateMatchScore(job, resume, form);
+          return { ...job, matchRate: score.rate, matchReasons: score.reasons };
+        }).sort((a, b) => b.matchRate - a.matchRate);
+
+        const highMatch = matched.filter(j => j.matchRate >= 40);
+        const lowMatch = matched.filter(j => j.matchRate < 40);
+
+        container.innerHTML = `
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-heading text-xl font-semibold text-slate-800">匹配结果</h2>
+            <span class="text-sm text-slate-500">共 ${matched.length} 个岗位</span>
+          </div>
+          <div class="space-y-4">
+            ${highMatch.map(job => renderJobCard(job)).join('')}
+          </div>
+          ${lowMatch.length > 0 ? `
+            <div class="mt-6">
+              <button id="toggle-low-match" onclick="toggleLowMatch()" class="glass w-full py-3 px-4 rounded-xl flex items-center justify-between cursor-pointer hover:bg-white/40 transition">
+                <span class="text-sm text-slate-600 flex items-center gap-2">${icon('chevron-down', 18, 'text-slate-400')} 低匹配度岗位（${lowMatch.length} 个）</span>
+                <span class="text-xs text-slate-400">点击展开</span>
+              </button>
+              <div id="low-match-list" class="hidden space-y-4 mt-4">
+                ${lowMatch.map(job => renderJobCard(job)).join('')}
+              </div>
+            </div>
+          ` : ''}
+        `;
+        btn.disabled = false;
+        btn.innerHTML = icon('search', 18, 'inline mr-1.5') + '重新匹配';
+        renderIcons();
+      }, 1800);
+    }
+
+    function toggleLowMatch() {
+      const list = document.getElementById('low-match-list');
+      const btn = document.getElementById('toggle-low-match');
+      const isHidden = list.classList.contains('hidden');
+      if (isHidden) {
+        list.classList.remove('hidden');
+        btn.querySelector('span:first-child').innerHTML = icon('chevron-up', 18, 'text-slate-400') + ' 低匹配度岗位';
+        btn.querySelector('span:last-child').textContent = '点击收起';
+      } else {
+        list.classList.add('hidden');
+        btn.querySelector('span:first-child').innerHTML = icon('chevron-down', 18, 'text-slate-400') + ' 低匹配度岗位';
+        btn.querySelector('span:last-child').textContent = '点击展开';
+      }
+      renderIcons();
+    }
+
+    function calculateMatchScore(job, resume, form) {
+      let skillScore = 0, eduScore = 0, expScore = 0;
+      const reasons = [];
+
+      // Skill match (40%)
+      const jobSkills = job.skills.map(s => s.toLowerCase());
+      const resumeSkills = resume.skills.map(s => s.toLowerCase());
+      const matchedSkills = jobSkills.filter(s => resumeSkills.some(rs => rs.includes(s) || s.includes(rs)));
+      skillScore = (matchedSkills.length / jobSkills.length) * 100;
+      if (matchedSkills.length > 0) {
+        reasons.push(`技能匹配 ${matchedSkills.length}/${jobSkills.length}：${matchedSkills.map(s => job.skills[jobSkills.indexOf(s)]).join('、')}`);
+      }
+
+      // Education match (30%)
+      const eduLevel = { '大专': 1, '本科': 2, '硕士': 3, '博士': 4 };
+      if (eduLevel[resume.education] >= eduLevel[job.education]) {
+        eduScore = 100;
+        reasons.push(`学历满足要求（${resume.education} ≥ ${job.education}）`);
+      } else {
+        eduScore = 50;
+      }
+
+      // Experience match (30%) - simplified: check if interest aligns with job title
+      const interestKeywords = form.interest.toLowerCase().split(/[\s,，、]+/).filter(Boolean);
+      const titleLower = job.title.toLowerCase();
+      const interestMatch = interestKeywords.some(k => titleLower.includes(k) || job.skills.some(s => s.toLowerCase().includes(k)));
+      expScore = interestMatch ? 100 : 40;
+      if (interestMatch) {
+        reasons.push('兴趣方向与岗位高度契合');
+      }
+
+      const total = Math.round(skillScore * 0.4 + eduScore * 0.3 + expScore * 0.3);
+      return { rate: total, reasons };
+    }
+
+    function matchColor(rate) {
+      if (rate >= 80) return { text: 'text-green-600', bg: 'bg-green-500', stroke: '#22c55e', label: '高度匹配' };
+      if (rate >= 60) return { text: 'text-brand-dark', bg: 'bg-brand-dark', stroke: '#0ea5e9', label: '良好匹配' };
+      if (rate >= 40) return { text: 'text-amber-600', bg: 'bg-amber-500', stroke: '#f59e0b', label: '一般匹配' };
+      return { text: 'text-slate-400', bg: 'bg-slate-400', stroke: '#94a3b8', label: '匹配度低' };
+    }
+
+    function renderJobCard(job) {
+      const c = matchColor(job.matchRate);
+      const favorites = State.get('favorites_' + currentUser.id, []);
+      const isFav = favorites.some(f => f.id === job.id);
+      const circumference = 2 * Math.PI * 28;
+      const offset = circumference - (job.matchRate / 100) * circumference;
+
+      return `
+        <div class="glass-card p-5">
+          <div class="flex items-start gap-4">
+            <!-- Score ring -->
+            <div class="relative shrink-0" aria-label="匹配度 ${job.matchRate}%">
+              <svg width="64" height="64" class="score-ring">
+                <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(14,165,233,0.1)" stroke-width="5"/>
+                <circle cx="32" cy="32" r="28" fill="none" stroke="${c.stroke}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"/>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="font-bold text-lg ${c.text}">${job.matchRate}%</span>
+              </div>
+            </div>
+
+            <!-- Job info -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <h3 class="font-heading text-lg font-semibold text-slate-800 truncate">${job.title}</h3>
+                  <p class="text-sm text-slate-500 mt-0.5">${job.company} · ${job.city} · ${job.salary}</p>
+                </div>
+                <button onclick="toggleFavorite('${job.id}')" data-fav-btn="${job.id}" class="shrink-0 p-2 rounded-lg hover:bg-white/40 transition cursor-pointer ${isFav ? 'text-red-500 fill-red-500' : 'text-slate-400'}" aria-label="${isFav ? '取消收藏' : '收藏岗位'}" aria-pressed="${isFav}">
+                  ${icon(isFav ? 'heart' : 'heart', 20, isFav ? 'fill-red-500' : '')}
+                </button>
+              </div>
+
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                ${job.tags.map(t => `<span class="text-xs px-2 py-0.5 rounded-full bg-brand-dark/10 text-brand-deep">${t}</span>`).join('')}
+              </div>
+
+              <div class="glass p-3 rounded-lg mt-3">
+                <p class="text-xs font-medium text-slate-600 mb-1">${icon('sparkles', 13, 'inline mr-1')}匹配理由</p>
+                <p class="text-sm text-slate-700">${job.matchReasons.join('；')}</p>
+              </div>
+
+              <div class="flex gap-2 mt-3">
+                <button onclick="showJobDetail('${job.id}', ${job.matchRate})" class="btn-secondary px-4 py-2 text-sm cursor-pointer">${icon('eye', 15, 'inline mr-1')}查看详情</button>
+                <button onclick="startAnalysis('${job.id}')" class="btn-primary px-4 py-2 text-sm cursor-pointer">${icon('file-search', 15, 'inline mr-1')}分析简历</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleFavorite(jobId) {
+      const job = MOCK_JOBS.find(j => j.id === jobId);
+      if (!job) return;
+      let favorites = State.get('favorites_' + currentUser.id, []);
+      const idx = favorites.findIndex(f => f.id === jobId);
+      if (idx >= 0) {
+        favorites.splice(idx, 1);
+        toast('已取消收藏', 'info');
+      } else {
+        favorites.push({ ...job, favoritedAt: Date.now() });
+        toast('已收藏到我的收藏', 'success');
+      }
+      State.set('favorites_' + currentUser.id, favorites);
+
+      // Only update heart icons in place, avoid full re-render that clears search results
+      document.querySelectorAll(`[data-fav-btn="${jobId}"]`).forEach(btn => {
+        const isFav = favorites.some(f => f.id === jobId);
+        btn.setAttribute('aria-pressed', isFav);
+        btn.classList.toggle('text-red-500', isFav);
+        btn.classList.toggle('text-slate-400', !isFav);
+        const heartIcon = btn.querySelector('[data-lucide], svg');
+        if (heartIcon) {
+          if (isFav) {
+            heartIcon.setAttribute('fill', 'currentColor');
+            btn.classList.add('fill-red-500');
+          } else {
+            heartIcon.setAttribute('fill', 'none');
+            btn.classList.remove('fill-red-500');
+          }
+        }
+      });
+
+      // If on favorites page, re-render to remove the deleted item
+      if (currentView === 'favorites') render();
+    }
+
+    function showJobDetail(jobId, matchRate) {
+      const job = MOCK_JOBS.find(j => j.id === jobId);
+      if (!job) return;
+      const favorites = State.get('favorites_' + currentUser.id, []);
+      const isFav = favorites.some(f => f.id === jobId);
+      const rate = (matchRate !== undefined && matchRate !== null) ? matchRate : (job.matchRate || 0);
+      const c = matchColor(rate);
+
+      showModal(`
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h2 class="font-heading text-2xl font-bold text-slate-800">${job.title}</h2>
+            <p class="text-slate-500 mt-1">${job.company} · ${job.city} · ${job.salary}</p>
+          </div>
+          <button onclick="closeModalDirect()" class="p-2 rounded-lg hover:bg-white/40 transition cursor-pointer" aria-label="关闭">${icon('x', 20)}</button>
+        </div>
+
+        <div class="flex flex-wrap gap-1.5 mb-4">
+          ${job.tags.map(t => `<span class="text-xs px-2.5 py-1 rounded-full bg-brand-dark/10 text-brand-deep">${t}</span>`).join('')}
+          <span class="text-xs px-2.5 py-1 rounded-full ${c.bg}/15 ${c.text} font-medium">${rate}% 匹配</span>
+        </div>
+
+        <div class="glass p-4 rounded-xl mb-4">
+          <h3 class="font-medium text-slate-800 mb-2">${icon('file-text', 16, 'inline mr-1')}岗位描述</h3>
+          <p class="text-sm text-slate-700 leading-relaxed">${job.desc}</p>
+        </div>
+
+        <div class="glass p-4 rounded-xl mb-4">
+          <h3 class="font-medium text-slate-800 mb-2">${icon('check-square', 16, 'inline mr-1')}任职要求</h3>
+          <ul class="text-sm text-slate-700 space-y-1.5">
+            <li>· 学历要求：${job.education}及以上</li>
+            <li>· 经验要求：${job.experience}</li>
+            <li>· 核心技能：${job.skills.join('、')}</li>
+          </ul>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <div class="flex gap-3">
+            <button onclick="toggleFavorite('${job.id}'); closeModalDirect();" class="btn-secondary flex-1 py-3 cursor-pointer">
+              ${icon('heart', 18, 'inline mr-1.5')}${isFav ? '取消收藏' : '收藏岗位'}
+            </button>
+            <button onclick="closeModalDirect(); startAnalysis('${job.id}');" class="btn-primary flex-1 py-3 cursor-pointer">
+              ${icon('file-search', 18, 'inline mr-1.5')}分析简历匹配度
+            </button>
+          </div>
+          <a href="${job.url}" target="_blank" rel="noopener noreferrer" class="btn-secondary w-full py-3 text-center cursor-pointer text-sm inline-flex items-center justify-center gap-1.5">
+            ${icon('external-link', 18)} 前往招聘网站查看 / 投递
+          </a>
+        </div>
+      `);
+      renderIcons();
+    }
+
+    // ===== View: Resume PDF (printable) =====
+    function viewResumePdf() {
+      const resumeList = Resumes.getAll();
+      const resume = Resumes.getActive();
+
+      // If no resume data, show empty state
+      if (!resume) {
+        return `
+          ${renderNav()}
+          <div class="view max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <button onclick="navigate('home')" class="btn-secondary px-3 py-1.5 text-sm mb-6 cursor-pointer inline-flex items-center gap-1">
+              ${icon('arrow-left', 16)} 返回
+            </button>
+            <div class="glass-card p-12 text-center">
+              <div class="w-16 h-16 mx-auto rounded-2xl bg-brand-dark/10 flex items-center justify-center text-brand-dark mb-4">${icon('file-text', 32)}</div>
+              <h3 class="font-heading text-lg font-medium text-slate-800 mb-2">还没有简历</h3>
+              <p class="text-slate-500/70 mb-6">上传或手动录入简历后，可在此预览、打印和导出 PDF</p>
+              <button onclick="navigate('resume')" class="btn-primary px-6 py-2.5 cursor-pointer">${icon('upload-cloud', 18, 'inline mr-1.5')}去添加简历</button>
+            </div>
+          </div>
+        `;
+      }
+
+      const skills = resume.skills || [];
+      const gradDate = resume.graduationDate ? resume.graduationDate.replace('-', '.') : '';
+
+      return `
+        ${renderNav()}
+        <div class="view max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 print:hidden">
+            <button onclick="navigate('home')" class="btn-secondary px-3 py-1.5 text-sm cursor-pointer inline-flex items-center gap-1">
+              ${icon('arrow-left', 16)} 返回
+            </button>
+            <div class="flex items-center gap-2">
+              <button onclick="navigate('resume')" class="btn-secondary px-4 py-2 text-sm cursor-pointer inline-flex items-center gap-1.5">
+                ${icon('edit-3', 16)} 编辑简历
+              </button>
+              <button onclick="window.print()" class="btn-primary px-5 py-2 text-sm cursor-pointer inline-flex items-center gap-1.5">
+                ${icon('printer', 18)} 打印 / 导出 PDF
+              </button>
+            </div>
+          </div>
+
+          ${resumeList.length > 0 ? `
+            <!-- Resume switcher -->
+            <div class="glass p-3 rounded-xl mb-4 print:hidden">
+              <div class="flex items-center gap-2">
+                ${icon('layers', 16, 'text-brand-dark shrink-0')}
+                <select onchange="switchActiveResume(this.value)" class="glass-input flex-1 px-3 py-2 text-sm text-slate-800 cursor-pointer">
+                  ${resumeList.map(r => `<option value="${r.id}" ${r.id === resume.id ? 'selected' : ''}>${r.name || '未命名简历'}${r.id === resume.id ? ' (当前)' : ''}</option>`).join('')}
+                </select>
+                <button onclick="renameResume('${resume.id}')" class="p-2 rounded-lg hover:bg-white/40 transition cursor-pointer text-slate-500" title="重命名" aria-label="重命名简历">${icon('edit-3', 16)}</button>
+                ${resumeList.length > 1 ? `<button onclick="deleteResume('${resume.id}','${resume.name || ''}')" class="p-2 rounded-lg hover:bg-white/40 transition cursor-pointer text-red-400" title="删除" aria-label="删除简历">${icon('trash-2', 16)}</button>` : ''}
+                <button onclick="addNewResume()" class="btn-secondary px-3 py-2 text-xs cursor-pointer ${Resumes.canAdd() ? '' : 'opacity-60'}">${icon('plus', 14, 'inline mr-1')}新建</button>
+              </div>
+            </div>
+          ` : ''}
+
+          <div id="resume-pdf-page" class="bg-white text-slate-800 rounded-2xl shadow-xl p-8 md:p-12 print:shadow-none print:rounded-none print:p-10" style="font-family: 'Work Sans', sans-serif;">
+            <!-- Header -->
+            <div class="border-b-2 border-slate-200 pb-6 mb-6">
+              <h1 class="text-3xl font-bold text-slate-800" style="font-family: 'Outfit', sans-serif;">${resume.name_person || resume.name || '未填写'}</h1>
+              <p class="text-slate-500 mt-1">求职意向：${resume.interest || '未填写'}${resume.city ? ' | 期望城市：' + resume.city : ''}</p>
+              <div class="flex flex-wrap gap-4 mt-3 text-sm text-slate-600">
+                ${gradDate ? `<span class="flex items-center gap-1">${icon('calendar', 14)} 毕业：${gradDate}</span>` : ''}
+                ${resume.education ? `<span class="flex items-center gap-1">${icon('graduation-cap', 14)} ${resume.education}</span>` : ''}
+                ${resume.major ? `<span class="flex items-center gap-1">${icon('book', 14)} ${resume.major}</span>` : ''}
+              </div>
+            </div>
+
+            <!-- Education -->
+            <section class="mb-6">
+              <h2 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2" style="font-family: 'Outfit', sans-serif;">${icon('graduation-cap', 18)} 教育背景</h2>
+              <div class="pl-1">
+                <div class="flex justify-between items-baseline">
+                  <span class="font-semibold text-slate-800">XX大学 · ${resume.major || '未填写'} · ${resume.education || '未填写'}</span>
+                  <span class="text-sm text-slate-500">2021.09 - ${gradDate || '2025.06'}</span>
+                </div>
+                ${resume.awards ? `<ul class="mt-2 text-sm text-slate-600 space-y-1 pl-4 list-disc"><li>${resume.awards}</li></ul>` : ''}
+              </div>
+            </section>
+
+            ${resume.campusExperience && resume.campusExperience.length > 0 ? `
+            <!-- Campus Experience -->
+            <section class="mb-6">
+              <h2 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2" style="font-family: 'Outfit', sans-serif;">${icon('users', 18)} 校园经历</h2>
+              <div class="pl-1 space-y-4">
+                ${resume.campusExperience.map(exp => `
+                  <div>
+                    <div class="flex justify-between items-baseline">
+                      <span class="font-semibold text-slate-800">${exp.title}</span>
+                      <span class="text-sm text-slate-500">${exp.period}</span>
+                    </div>
+                    <ul class="mt-1.5 text-sm text-slate-600 space-y-1 pl-4 list-disc">
+                      ${exp.items.map(i => `<li>${i}</li>`).join('')}
+                    </ul>
+                  </div>
+                `).join('')}
+              </div>
+            </section>
+            ` : ''}
+
+            ${resume.internshipExperience && resume.internshipExperience.length > 0 ? `
+            <!-- Internship -->
+            <section class="mb-6">
+              <h2 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2" style="font-family: 'Outfit', sans-serif;">${icon('briefcase', 18)} 实习经历</h2>
+              <div class="pl-1 space-y-4">
+                ${resume.internshipExperience.map(exp => `
+                  <div>
+                    <div class="flex justify-between items-baseline">
+                      <span class="font-semibold text-slate-800">${exp.title}</span>
+                      <span class="text-sm text-slate-500">${exp.period}</span>
+                    </div>
+                    <ul class="mt-1.5 text-sm text-slate-600 space-y-1 pl-4 list-disc">
+                      ${exp.items.map(i => `<li>${i}</li>`).join('')}
+                    </ul>
+                  </div>
+                `).join('')}
+              </div>
+            </section>
+            ` : ''}
+
+            ${resume.skillsGrouped ? `
+            <!-- Skills -->
+            <section class="mb-6">
+              <h2 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2" style="font-family: 'Outfit', sans-serif;">${icon('code', 18)} 专业技能</h2>
+              <div class="pl-1 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-sm text-slate-600">
+                ${Object.entries(resume.skillsGrouped).map(([k, v]) => `<div><span class="font-medium text-slate-700">${k}：</span>${v}</div>`).join('')}
+              </div>
+            </section>
+            ` : skills.length > 0 ? `
+            <section class="mb-6">
+              <h2 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2" style="font-family: 'Outfit', sans-serif;">${icon('code', 18)} 专业技能</h2>
+              <div class="pl-1 flex flex-wrap gap-2">
+                ${skills.map(s => `<span class="text-sm px-2.5 py-1 rounded-md bg-slate-100 text-slate-700">${s}</span>`).join('')}
+              </div>
+            </section>
+            ` : ''}
+
+            ${resume.selfEvaluation && resume.selfEvaluation.length > 0 ? `
+            <!-- Self-evaluation -->
+            <section>
+              <h2 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2" style="font-family: 'Outfit', sans-serif;">${icon('user', 18)} 自我评价</h2>
+              <ul class="pl-1 text-sm text-slate-600 space-y-1 pl-4 list-disc">
+                ${resume.selfEvaluation.map(s => `<li>${s}</li>`).join('')}
+              </ul>
+            </section>
+            ` : ''}
+
+            ${resume.experienceSummary && !resume.campusExperience ? `
+            <section class="mb-6">
+              <h2 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2" style="font-family: 'Outfit', sans-serif;">${icon('file-text', 18)} 经历摘要</h2>
+              <div class="pl-1">
+                <p class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">${resume.experienceSummary}</p>
+              </div>
+            </section>
+            ` : ''}
+          </div>
+
+          <p class="text-center text-xs text-slate-400/50 mt-4 print:hidden">点击「打印 / 导出 PDF」可在浏览器打印对话框中另存为 PDF</p>
+        </div>
+      `;
+    }
+
+
+    // ===== View: Optimize (resume optimization for favorited jobs) =====
+    function viewOptimize() {
+      const resume = State.get('resume_' + currentUser.id, null);
+      const favorites = State.get('favorites_' + currentUser.id, []);
+
+      return `
+        ${renderNav()}
+        <div class="view max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <button onclick="navigate('home')" class="btn-secondary px-3 py-1.5 text-sm mb-6 cursor-pointer inline-flex items-center gap-1">
+            ${icon('arrow-left', 16)} 返回
+          </button>
+
+          <h1 class="font-heading text-2xl font-bold text-slate-800 mb-2">简历针对性优化</h1>
+          <p class="text-slate-600/70 mb-8">选择心仪岗位，AI 将诊断你的简历与岗位的匹配差距</p>
+
+          ${!resume ? `
+            <div class="glass-card p-8 text-center">
+              <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/15 flex items-center justify-center text-amber-600 mb-4">${icon('alert-circle', 32)}</div>
+              <h2 class="font-heading text-xl font-semibold text-slate-800 mb-2">请先上传简历</h2>
+              <p class="text-slate-500/70 mb-6">上传或手动录入简历后才能进行针对性优化</p>
+              <button onclick="navigate('resume')" class="btn-primary px-6 py-2.5 cursor-pointer">${icon('upload-cloud', 18, 'inline mr-1.5')}去上传简历</button>
+            </div>
+          ` : favorites.length === 0 ? `
+            <div class="glass-card p-12 text-center">
+              <div class="w-16 h-16 mx-auto rounded-2xl bg-brand-dark/10 flex items-center justify-center text-brand-dark mb-4">${icon('heart', 32)}</div>
+              <h3 class="font-heading text-lg font-medium text-slate-800 mb-2">还没有收藏的岗位</h3>
+              <p class="text-slate-500/70 mb-6">先去匹配页面收藏感兴趣的岗位，再回来进行针对性优化</p>
+              <button onclick="navigate('match')" class="btn-primary px-6 py-2.5 cursor-pointer">${icon('search', 18, 'inline mr-1.5')}去匹配岗位</button>
+            </div>
+          ` : `
+            <div class="glass p-4 rounded-xl mb-6 flex items-center gap-3">
+              ${icon('info', 18, 'text-brand-dark shrink-0')}
+              <p class="text-sm text-slate-600">点击下方任一岗位，立即开始简历分析与针对性优化建议</p>
+            </div>
+            <div class="space-y-4">
+              ${favorites.map(job => `
+                <div class="glass-card p-5 cursor-pointer hover:shadow-lg transition" onclick="startAnalysis('${job.id}')" role="button" tabindex="0" aria-label="分析 ${job.title} 岗位">
+                  <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <h3 class="font-heading text-lg font-semibold text-slate-800">${job.title}</h3>
+                        ${icon('arrow-right', 18, 'text-slate-400')}
+                      </div>
+                      <p class="text-sm text-slate-500 mt-0.5">${job.company} · ${job.city} · ${job.salary}</p>
+                      <div class="flex flex-wrap gap-1.5 mt-2">
+                        ${job.tags.map(t => `<span class="text-xs px-2 py-0.5 rounded-full bg-brand-dark/10 text-brand-dark">${t}</span>`).join('')}
+                      </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                      <p class="text-xs text-slate-400">收藏于</p>
+                      <p class="text-xs text-slate-500">${new Date(job.favoritedAt).toLocaleDateString('zh-CN')}</p>
+                    </div>
+                  </div>
+                  <div class="mt-3 pt-3 border-t border-white/20 flex items-center justify-between">
+                    <span class="text-xs text-slate-400">${icon('file-search', 14, 'inline mr-1')}点击开始简历分析</span>
+                    <span class="text-xs px-3 py-1 rounded-full bg-brand-dark/10 text-brand-dark font-medium">分析</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    // ===== View: Favorites =====
+    function viewFavorites() {
+      const favorites = State.get('favorites_' + currentUser.id, []);
+      return `
+        ${renderNav()}
+        <div class="view max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <button onclick="navigate('home')" class="btn-secondary px-3 py-1.5 text-sm mb-6 cursor-pointer inline-flex items-center gap-1">
+            ${icon('arrow-left', 16)} 返回
+          </button>
+
+          <h1 class="font-heading text-2xl font-bold text-slate-800 mb-2">我的收藏</h1>
+          <p class="text-slate-600/70 mb-8">已收藏 ${favorites.length} 个岗位</p>
+
+          ${favorites.length === 0 ? `
+            <div class="glass-card p-12 text-center">
+              <div class="w-16 h-16 mx-auto rounded-2xl bg-brand-dark/10 flex items-center justify-center text-brand-dark mb-4">${icon('heart', 32)}</div>
+              <h3 class="font-heading text-lg font-medium text-slate-800 mb-2">还没有收藏的岗位</h3>
+              <p class="text-slate-500/70 mb-6">去匹配页面收藏感兴趣的岗位吧</p>
+              <button onclick="navigate('match')" class="btn-primary px-6 py-2.5 cursor-pointer">${icon('search', 18, 'inline mr-1.5')}去匹配岗位</button>
+            </div>
+          ` : `
+            <div class="space-y-4">
+              ${favorites.map(job => renderFavoriteCard(job)).join('')}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function renderFavoriteCard(job) {
+      return `
+        <div class="glass-card p-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1 min-w-0">
+              <h3 class="font-heading text-lg font-semibold text-slate-800">${job.title}</h3>
+              <p class="text-sm text-slate-500 mt-0.5">${job.company} · ${job.city} · ${job.salary}</p>
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                ${job.tags.map(t => `<span class="text-xs px-2 py-0.5 rounded-full bg-brand-dark/10 text-brand-deep">${t}</span>`).join('')}
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button onclick="showJobDetail('${job.id}')" class="btn-secondary p-2 cursor-pointer" aria-label="查看详情">${icon('eye', 18)}</button>
+              <button onclick="startAnalysis('${job.id}')" class="btn-primary px-3 py-2 text-sm cursor-pointer">${icon('file-search', 16, 'inline mr-1')}分析</button>
+              <button onclick="toggleFavorite('${job.id}')" class="btn-secondary p-2 cursor-pointer text-red-500" aria-label="取消收藏">${icon('trash-2', 18)}</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ===== Analysis =====
+    function startAnalysis(jobId) {
+      const job = MOCK_JOBS.find(j => j.id === jobId);
+      if (!job) return;
+      const resume = Resumes.getActive();
+      if (!resume) {
+        toast('请先上传简历', 'error');
+        navigate('resume');
+        return;
+      }
+
+      // Check quota
+      if (currentUser.freeAnalysisRemaining <= 0 && currentUser.subscriptionType === 'free') {
+        showPaywallModal();
+        return;
+      }
+
+      selectedJobForAnalysis = job;
+      navigate('analysis-loading');
+
+      // Simulate AI analysis
+      setTimeout(() => {
+        const result = generateAnalysis(job, resume);
+        const analyses = State.get('analyses_' + currentUser.id, []);
+        const record = {
+          id: 'a_' + Date.now(),
+          userId: currentUser.id,
+          jobId: job.id,
+          jobTitle: job.title,
+          company: job.company,
+          matchRate: result.matchRate,
+          matchedItems: result.matched,
+          missingItems: result.missing,
+          suggestions: result.suggestions,
+          rewriteExample: result.rewrite,
+          analyzedAt: Date.now(),
+        };
+        analyses.push(record);
+        State.set('analyses_' + currentUser.id, analyses);
+
+        // Decrement free quota
+        if (currentUser.subscriptionType === 'free') {
+          currentUser.freeAnalysisRemaining--;
+          State.set('currentUser', currentUser);
+          // Also update stored user
+          State.set('user_' + currentUser.id, currentUser);
+        }
+
+        navigate('analysis-result');
+        // Store current analysis id for display
+        window._currentAnalysisId = record.id;
+        render();
+      }, 3000);
+    }
+
+    function generateAnalysis(job, resume) {
+      const jobSkills = job.skills.map(s => s.toLowerCase());
+      const resumeSkills = resume.skills.map(s => s.toLowerCase());
+      const matched = [];
+      const missing = [];
+
+      jobSkills.forEach((s, i) => {
+        const origSkill = job.skills[i];
+        if (resumeSkills.some(rs => rs.includes(s) || s.includes(rs))) {
+          matched.push(origSkill);
+        } else {
+          missing.push(origSkill);
+        }
+      });
+
+      const eduLevel = { '大专': 1, '本科': 2, '硕士': 3, '博士': 4 };
+      const eduMatch = eduLevel[resume.education] >= eduLevel[job.education];
+      if (eduMatch) matched.push(`学历（${resume.education}）`);
+      else missing.push(`学历（岗位要求${job.education}）`);
+
+      // Soft skills check (simplified)
+      const softSkills = ['沟通', '团队协作', '学习能力'];
+      softSkills.forEach(s => {
+        if (resume.experienceSummary && resume.experienceSummary.includes(s)) {
+          matched.push(s);
+        } else {
+          missing.push(s);
+        }
+      });
+
+      const matchRate = Math.round((matched.length / (matched.length + missing.length)) * 100);
+
+      const suggestions = [
+        { priority: 'high', text: missing.length > 0 ? `补充缺失技能：${missing.slice(0, 3).join('、')}` : '技能匹配度良好，保持学习', detail: '建议在简历中突出相关项目经验，即使没有工作经历也可以写课程项目或个人作品。' },
+        { priority: 'medium', text: '强化项目经历描述', detail: '使用 STAR 法则（情境-任务-行动-结果）量化你的贡献，如"优化页面加载速度 30%"。' },
+        { priority: 'low', text: '添加个人作品链接', detail: '如果有 GitHub 主页、个人博客或在线作品集，建议在简历顶部添加链接。' },
+      ];
+
+      const rewrite = `【优化前】${resume.experienceSummary || '在校期间参与项目开发'}
+
+【优化后】在校期间主导校园电商平台前端开发（React + TypeScript），独立完成商品展示、购物车、支付流程等核心模块，优化首屏加载速度提升 40%，服务 2000+ 在校学生。曾在某互联网公司实习，参与内部管理系统迭代，熟悉 Git 协作流程与敏捷开发模式。`;
+
+      return { matchRate, matched, missing, suggestions, rewrite };
+    }
+
+    function viewAnalysisLoading() {
+      const job = selectedJobForAnalysis;
+      return `
+        ${renderNav()}
+        <div class="view max-w-2xl mx-auto px-4 py-16 text-center">
+          <div class="glass-card p-10">
+            <div class="relative w-24 h-24 mx-auto mb-6">
+              <div class="absolute inset-0 rounded-full border-4 border-brand-dark/15"></div>
+              <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-brand-dark animate-spin"></div>
+              <div class="absolute inset-0 flex items-center justify-center text-brand-dark">${icon('cpu', 36)}</div>
+            </div>
+            <h2 class="font-heading text-xl font-semibold text-slate-800 mb-2">AI 正在分析中...</h2>
+            <p class="text-slate-500/70 mb-6">正在对比「${job ? job.title : ''}」与你的简历</p>
+            <div class="space-y-2 max-w-sm mx-auto text-left">
+              <div class="flex items-center gap-2 text-sm text-slate-600"><span class="text-green-500">${icon('check', 16)}</span> 解析岗位要求</div>
+              <div class="flex items-center gap-2 text-sm text-slate-600"><span class="text-green-500">${icon('check', 16)}</span> 提取简历技能</div>
+              <div class="flex items-center gap-2 text-sm text-slate-600"><span class="spinner spinner-dark" style="width:16px;height:16px"></span> 计算匹配维度</div>
+              <div class="flex items-center gap-2 text-sm text-slate-400">${icon('circle', 16)} 生成诊断报告</div>
+              <div class="flex items-center gap-2 text-sm text-slate-400">${icon('circle', 16)} 输出优化建议</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function viewAnalysisResult() {
+      const analyses = State.get('analyses_' + currentUser.id, []);
+      const analysis = analyses.find(a => a.id === window._currentAnalysisId) || analyses[analyses.length - 1];
+      if (!analysis) {
+        navigate('home');
+        return '';
+      }
+      const c = matchColor(analysis.matchRate);
+      const circumference = 2 * Math.PI * 40;
+      const offset = circumference - (analysis.matchRate / 100) * circumference;
+
+      const priorityColors = { high: 'text-red-500', medium: 'text-amber-600', low: 'text-slate-400' };
+      const priorityLabels = { high: '高', medium: '中', low: '低' };
+
+      return `
+        ${renderNav()}
+        <div class="view max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <button onclick="navigate('home')" class="btn-secondary px-3 py-1.5 text-sm mb-6 cursor-pointer inline-flex items-center gap-1">
+            ${icon('arrow-left', 16)} 返回首页
+          </button>
+
+          <!-- Overview -->
+          <div class="glass-card p-6 md:p-8 mb-6">
+            <div class="flex flex-col md:flex-row items-center gap-6">
+              <div class="relative shrink-0" aria-label="总匹配度 ${analysis.matchRate}%">
+                <svg width="100" height="100" class="score-ring">
+                  <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(14,165,233,0.1)" stroke-width="8"/>
+                  <circle cx="50" cy="50" r="40" fill="none" stroke="${c.stroke}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span class="font-heading text-3xl font-bold ${c.text}">${analysis.matchRate}%</span>
+                  <span class="text-xs text-slate-500">总匹配度</span>
+                </div>
+              </div>
+              <div class="flex-1 text-center md:text-left">
+                <h1 class="font-heading text-2xl font-bold text-slate-800">简历诊断报告</h1>
+                <p class="text-slate-500 mt-1">${analysis.jobTitle} · ${analysis.company}</p>
+                <p class="text-xs text-slate-400/70 mt-1">分析时间：${new Date(analysis.analyzedAt).toLocaleString('zh-CN')}</p>
+                <div class="mt-3">
+                  <span class="text-sm px-3 py-1 rounded-full ${c.bg}/15 ${c.text} font-medium">${c.label}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Matched items -->
+            <div class="glass-card p-6">
+              <h3 class="font-heading text-lg font-semibold text-green-600 mb-4">${icon('check-circle', 20, 'inline mr-1.5')}匹配项 (${analysis.matchedItems.length})</h3>
+              <div class="space-y-2">
+                ${analysis.matchedItems.map(item => `
+                  <div class="flex items-center gap-2 glass p-2.5 rounded-lg">
+                    <span class="text-green-500 shrink-0">${icon('check', 16)}</span>
+                    <span class="text-sm text-slate-700">${item}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Missing items -->
+            <div class="glass-card p-6">
+              <h3 class="font-heading text-lg font-semibold text-red-500 mb-4">${icon('x-circle', 20, 'inline mr-1.5')}缺失项 (${analysis.missingItems.length})</h3>
+              <div class="space-y-2">
+                ${analysis.missingItems.length === 0
+                  ? '<p class="text-sm text-slate-500/70 text-center py-4">暂无缺失项，匹配度很高！</p>'
+                  : analysis.missingItems.map(item => `
+                    <div class="flex items-center gap-2 glass p-2.5 rounded-lg">
+                      <span class="text-red-400 shrink-0">${icon('x', 16)}</span>
+                      <span class="text-sm text-slate-700">${item}</span>
+                    </div>
+                  `).join('')}
+              </div>
+            </div>
+          </div>
+
+          <!-- Suggestions -->
+          <div class="glass-card p-6 md:p-8 mb-6">
+            <h3 class="font-heading text-xl font-semibold text-slate-800 mb-4">${icon('lightbulb', 20, 'inline mr-1.5 text-amber-600')}补充建议</h3>
+            <div class="space-y-4">
+              ${analysis.suggestions.map(s => `
+                <div class="glass p-4 rounded-xl">
+                  <div class="flex items-start gap-3">
+                    <span class="text-xs px-2 py-0.5 rounded-full ${priorityColors[s.priority]}/15 ${priorityColors[s.priority]} font-medium shrink-0 mt-0.5">${priorityLabels[s.priority]}</span>
+                    <div class="flex-1">
+                      <p class="font-medium text-slate-800 text-sm">${s.text}</p>
+                      <p class="text-sm text-slate-500/80 mt-1">${s.detail}</p>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Rewrite example -->
+          <div class="glass-card p-6 md:p-8 mb-6">
+            <h3 class="font-heading text-xl font-semibold text-slate-800 mb-4">${icon('edit-3', 20, 'inline mr-1.5 text-brand-dark')}改写示范</h3>
+            <div class="glass p-4 rounded-xl mb-3">
+              <p class="text-sm text-slate-600 mb-2 font-medium">${icon('file-text', 15, 'inline mr-1')}优化前</p>
+              <p class="text-sm text-slate-500 leading-relaxed whitespace-pre-wrap">${(analysis.rewriteExample || '').split('【优化后】')[0].replace('【优化前】', '').trim() || '暂无'}</p>
+            </div>
+            <div class="glass p-4 rounded-xl mb-3 border-l-4 border-brand-dark">
+              <p class="text-sm text-slate-700 mb-2 font-medium">${icon('sparkles', 15, 'inline mr-1 text-brand-dark')}优化后</p>
+              <p class="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">${(analysis.rewriteExample || '').split('【优化后】')[1]?.trim() || analysis.rewriteExample || ''}</p>
+            </div>
+            <div class="flex gap-3">
+              <button onclick="applyRewriteToResume('${analysis.id}')" class="btn-primary flex-1 py-2.5 text-sm cursor-pointer">${icon('check', 16, 'inline mr-1.5')}应用到我的简历</button>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button onclick="navigate('match')" class="btn-secondary flex-1 py-3 cursor-pointer">${icon('search', 18, 'inline mr-1.5')}继续匹配岗位</button>
+            <button onclick="navigate('home')" class="btn-primary flex-1 py-3 cursor-pointer">${icon('home', 18, 'inline mr-1.5')}返回首页</button>
+          </div>
+
+          <!-- Remaining quota notice -->
+          ${currentUser.subscriptionType === 'free' ? `
+            <div class="glass p-4 rounded-xl mt-6 text-center">
+              <p class="text-sm text-slate-600">${icon('zap', 16, 'inline text-amber-600 mr-1')}本月剩余免费分析次数：<span class="font-bold text-brand-dark">${currentUser.freeAnalysisRemaining}</span></p>
+              ${currentUser.freeAnalysisRemaining === 0 ? `
+                <button onclick="showPaywallModal()" class="btn-primary px-6 py-2 mt-3 text-sm cursor-pointer">${icon('crown', 16, 'inline mr-1')}升级解锁更多次数</button>
+              ` : ''}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function viewAnalysis(analysisId) {
+      window._currentAnalysisId = analysisId;
+      navigate('analysis-result');
+    }
+
+    // ===== Paywall =====
+    function showPaywallModal() {
+      const plans = [
+        { id: 'single', name: '单次分析', price: 2.9, unit: '次', desc: '适合临时需要', features: ['1 次深度分析', '7 天有效'] },
+        { id: 'monthly', name: '月度会员', price: 9.9, unit: '月', desc: '高频求职首选', features: [' unlimited 分析', '30 天有效', '优先客服'], popular: true },
+        { id: 'quarterly', name: '季度会员', price: 19.9, unit: '季', desc: '性价比之选', features: ['unlimited 分析', '90 天有效', '优先客服', '简历模板下载'] },
+      ];
+
+      showModal(`
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center text-white shadow-lg mb-4">${icon('crown', 32)}</div>
+          <h2 class="font-heading text-2xl font-bold text-slate-800">免费额度已用完</h2>
+          <p class="text-slate-500/70 mt-1">升级会员，解锁无限分析</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          ${plans.map(p => `
+            <div class="glass-card p-5 ${p.popular ? 'border-2 border-brand-dark' : ''} relative">
+              ${p.popular ? '<span class="absolute -top-2 left-1/2 -translate-x-1/2 text-xs px-2 py-0.5 rounded-full bg-brand-dark text-white font-medium">推荐</span>' : ''}
+              <h3 class="font-heading text-lg font-semibold text-slate-800">${p.name}</h3>
+              <p class="text-xs text-slate-500/70 mt-0.5">${p.desc}</p>
+              <div class="my-4">
+                <span class="font-heading text-3xl font-bold text-brand-dark">¥${p.price}</span>
+                <span class="text-sm text-slate-500">/${p.unit}</span>
+              </div>
+              <ul class="space-y-1.5 mb-4">
+                ${p.features.map(f => `<li class="text-xs text-slate-600 flex items-center gap-1.5"><span class="text-green-500">${icon('check', 14)}</span>${f}</li>`).join('')}
+              </ul>
+              <button onclick="subscribe('${p.id}')" class="${p.popular ? 'btn-primary' : 'btn-secondary'} w-full py-2.5 text-sm cursor-pointer">选择${p.name}</button>
+            </div>
+          `).join('')}
+        </div>
+
+        <button onclick="closeModalDirect()" class="btn-secondary w-full py-2.5 text-sm cursor-pointer">稍后再说</button>
+      `);
+      renderIcons();
+    }
+
+    function subscribe(planId) {
+      const plans = { single: { name: '单次', type: 'single' }, monthly: { name: '月度', type: 'monthly' }, quarterly: { name: '季度', type: 'quarterly' } };
+      const plan = plans[planId];
+      currentUser.subscriptionType = plan.type;
+      if (plan.type === 'single') {
+        currentUser.freeAnalysisRemaining += 1;
+      } else {
+        currentUser.freeAnalysisRemaining = 999;
+      }
+      State.set('currentUser', currentUser);
+      State.set('user_' + currentUser.id, currentUser);
+
+      closeModalDirect();
+
+      // Show payment success page
+      showModal(`
+        <div class="text-center py-8">
+          <div class="w-20 h-20 mx-auto rounded-full bg-green-500/15 flex items-center justify-center text-green-500 mb-4">${icon('check-circle', 40)}</div>
+          <h2 class="font-heading text-2xl font-bold text-slate-800 mb-2">支付成功</h2>
+          <p class="text-slate-500/70 mb-6">已开通${plan.name}会员</p>
+          <button onclick="closeModalDirect(); navigate('home');" class="btn-primary px-8 py-2.5 cursor-pointer">${icon('home', 18, 'inline mr-1.5')}返回首页</button>
+        </div>
+      `);
+      renderIcons();
+      toast(`已开通${plan.name}会员`, 'success');
+    }
+
+    // ===== Main Render =====
+    function render() {
+      const app = document.getElementById('app');
+
+      if (!currentUser) {
+        switch (currentView) {
+          case 'login': app.innerHTML = viewLogin(); break;
+          case 'landing': app.innerHTML = viewLanding(); break;
+          default: app.innerHTML = viewLanding();
+        }
+      } else {
+        switch (currentView) {
+          case 'login': app.innerHTML = viewLogin(); break;
+          case 'home': app.innerHTML = viewHome(); break;
+          case 'resume': app.innerHTML = viewResume(); break;
+          case 'match': app.innerHTML = viewMatch(); break;
+          case 'favorites': app.innerHTML = viewFavorites(); break;
+          case 'optimize': app.innerHTML = viewOptimize(); break;
+          case 'resume-pdf': app.innerHTML = viewResumePdf(); break;
+          case 'analysis-loading': app.innerHTML = viewAnalysisLoading(); break;
+          case 'analysis-result': app.innerHTML = viewAnalysisResult(); break;
+          default: app.innerHTML = viewHome();
+        }
+      }
+
+      renderIcons();
+    }
+
+    // ===== Init =====
+    document.addEventListener('DOMContentLoaded', () => {
+      // 初始化演示简历（林思远完整简历），确保始终存在
+      const tempUser = { id: 'demo' };
+      const tempState = {
+        get: (k, d) => { try { const v = localStorage.getItem('careergo_' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
+        set: (k, v) => localStorage.setItem('careergo_' + k, JSON.stringify(v)),
+      };
+      if (!tempState.get('resumes_demo', null)) {
+        const demoData = getDemoResumeData();
+        tempState.set('resumes_demo', [demoData]);
+        tempState.set('activeResumeId_demo', demoData.id);
+        tempState.set('resume_demo', demoData);
+      }
+      renderIcons();
+      render();
+    });
+  </script>
+</body>
+</html>
